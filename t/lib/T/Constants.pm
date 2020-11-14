@@ -9,14 +9,14 @@ BEGIN {
     %T::Constants::EXPORT_TAGS = (
         all => [
             qw/
-              $T_LIB
-              $T_LIB_DATA
               $T_DATABASE
-              @T_DB_CONNECT_ARGS
+              $T_DB_ATTR
               $T_DB_DSN
               $T_DB_USER
               $T_DB_PASS
-              $T_DB_ATTR
+              $T_LIB
+              $T_LIB_DATA
+              @T_DB_CONNECT_ARGS
               /
         ]
     );
@@ -32,7 +32,7 @@ our ( $T_LIB, $T_LIB_DATA, $T_DATABASE ) = do {
     ( "$lib", "$lib/data", "$lib/data/chinook.db" );
 };
 
-our ( $T_DB_DSN, $T_DB_USER, $T_DB_PASS, $T_DB_ATTR ) = do {
+our ( $T_DB_DSN, $T_DB_USER, $T_DB_PASS, $T_DB_ATTR ) = (
     our @T_DB_CONNECT_ARGS = (
         "dbi:SQLite:dbname=$T_DATABASE",
         "",
@@ -43,7 +43,7 @@ our ( $T_DB_DSN, $T_DB_USER, $T_DB_PASS, $T_DB_ATTR ) = do {
             RaiseError     => 1,
             sqlite_unicode => 1,
         }
-    );
-};
+    )
+);
 
-1;
+    1;
