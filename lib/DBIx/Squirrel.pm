@@ -3,6 +3,8 @@ use warnings;
 
 package DBIx::Squirrel;
 
+## no critic (TestingAndDebugging::ProhibitNoStrict)
+
 BEGIN {
     @DBIx::Squirrel::ISA     = ( 'DBI' );
     $DBIx::Squirrel::VERSION = '2020.11.00';
@@ -50,6 +52,8 @@ sub connect_cloned {
     };
     return $handle;
 }
+
+## use critic
 
 1;
 
