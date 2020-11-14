@@ -1,7 +1,6 @@
 BEGIN {
     delete $INC{ 'FindBin.pm' };
     require FindBin;
-    require Cwd;
 }
 
 use Test::Most;
