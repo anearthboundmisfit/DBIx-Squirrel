@@ -3,6 +3,7 @@ BEGIN {
     require FindBin;
 }
 
+use autobox::Core;
 use Test::Most;
 use Cwd 'realpath';
 use DBIx::Squirrel::util ':all';
@@ -80,6 +81,20 @@ ok $cloned_ekorn_dbh_1 != $ekorn_dbh,
   'first clone differs from master';
 ok $cloned_ekorn_dbh_2 != $cloned_ekorn_dbh_1,
   'second clone differs from first';
+
+my $sth = $ekorn_dbh->prepare('select * from customers where City = ?');
+isa_ok $sth, 'DBIx::Squirrel::st';
+
+my $res = $sth->execute('Delhi');
+ok $res;
+
+my $arr = $sth->fetchall_arrayref({});
+ok $arr;
+is $arr->length, 1;
+is $arr->[0]{CustomerId}, 58;
+explain $arr;
+
+$ekorn_dbh->disconnect;
 
 ok 1, __FILE__ . ' complete';
 done_testing;
