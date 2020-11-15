@@ -10,6 +10,7 @@ BEGIN {
     *DBIx::Squirrel::db::VERSION = *DBIx::Squirrel::VERSION;
 }
 
+use namespace::autoclean;
 use DBIx::Squirrel::st;
 
 sub _get_param_order {
@@ -40,8 +41,11 @@ sub prepare_cached {
         }
     };
     if ( $sth ) {
-        $sth->{ private_sq_params }    = _get_param_order( $sql );
-        $sth->{ private_sq_cache_key } = join '#', ( caller 0 )[ 1, 2 ];
+        $sth->{ private_dbix_squirrel } = {
+            params    => _get_param_order( $sql ),
+            cache_key => join( '#', ( caller 0 )[ 1, 2 ] ),
+        };
+        bless $sth, 'DBIx::Squirrel::st';
     }
     return $sth;
 }
@@ -57,7 +61,10 @@ sub prepare {
         }
     };
     if ( $sth ) {
-        $sth->{ private_sq_params }    = _get_param_order( $sql );
+        $sth->{ private_dbix_squirrel } = {
+            params => _get_param_order( $sql ),
+        };
+        bless $sth, 'DBIx::Squirrel::st';
     }
     return $sth;
 }

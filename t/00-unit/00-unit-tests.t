@@ -42,7 +42,7 @@ isa_ok $dbi_dbh, 'DBI::db', 'standard DBI::db master';
 # Open two more connections by cloning the master and re-blessing the new
 # connections appropriately.
 
-my $cloned_dbi_dbh_1 = DBIx::Squirrel->connect_cloned( $dbi_dbh );
+my $cloned_dbi_dbh_1 = DBIx::Squirrel->connect_clone( $dbi_dbh );
 isa_ok $cloned_dbi_dbh_1, 'DBIx::Squirrel::db',
   'first DBIx::Squirrel::db clone created';
 
@@ -74,7 +74,7 @@ isa_ok $ekorn_dbh, 'DBIx::Squirrel::db';
 # Open two more connections by cloning the master and re-blessing the new
 # connections appropriately.
 
-my $cloned_ekorn_dbh_1 = DBIx::Squirrel->connect_cloned( $ekorn_dbh );
+my $cloned_ekorn_dbh_1 = DBIx::Squirrel->connect_clone( $ekorn_dbh );
 isa_ok $cloned_ekorn_dbh_1, 'DBIx::Squirrel::db',
   'first DBIx::Squirrel::db clone created';
 
@@ -93,10 +93,14 @@ $cloned_ekorn_dbh_1->disconnect;
 $cloned_ekorn_dbh_2->disconnect;
 $ekorn_dbh->disconnect;
 
-my ( $exp, $sql, $dbh, $sth, $res, $arr );
+# What follows are some basic checks that everything seems to work in the
+# prepare->execute->fetch workflow. We also want to take the opportunity to
+# check that cloning database handles really works, especially when cloning
+# standard DBI database handles.
 
-$dbh = T::Database->connect;
-$exp = [ {
+my $master = DBI->connect( @T_DB_CONNECT_ARGS );
+my $dbh    = DBIx::Squirrel->connect( $master );
+my $exp    = [ {
         Address      => '12,Community Centre',
         City         => 'Delhi',
         Company      => undef,
@@ -112,6 +116,8 @@ $exp = [ {
         SupportRepId => 3
     }
 ];
+
+my ( $sql, $sth, $res, $arr );
 
 # We are testing that we can prepare and execute a statement, and get the
 # expected results back.
