@@ -12,13 +12,13 @@ BEGIN {
 
 use DBIx::Squirrel::st;
 
-sub _get_params_order {
+sub _get_param_order {
     my $order = do {
         my %order;
         if ( my $sql = shift ) {
-            my @params = $sql =~ m{(\:\w+)\b}g;
+            my @params = $sql =~ m{[\:\$\?]\w+\b}g;
             if ( my $count = @params ) {
-                $sql =~ s{\:\w+\b}{?}g;
+                $sql =~ s{[\:\$\?]\w+\b}{?}g;
                 for ( my $p = 0 ; $p < $count ; $p += 1 ) {
                     $order{ 1 + $p } = $params[ $p ];
                 }
@@ -40,9 +40,7 @@ sub prepare_cached {
         }
     };
     if ( $sth ) {
-        if ( my $order = _get_params_order( $sql ) ) {
-            $sth->{ private_sq_params } = $order;
-        }
+        $sth->{ private_sq_params }    = _get_param_order( $sql );
         $sth->{ private_sq_cache_key } = join '#', ( caller 0 )[ 1, 2 ];
     }
     return $sth;
@@ -59,9 +57,7 @@ sub prepare {
         }
     };
     if ( $sth ) {
-        if ( my $order = _get_params_order( $sql ) ) {
-            $sth->{ private_sq_params } = $order;
-        }
+        $sth->{ private_sq_params }    = _get_param_order( $sql );
     }
     return $sth;
 }
