@@ -46,4 +46,4 @@ our ( $T_DB_DSN, $T_DB_USER, $T_DB_PASS, $T_DB_ATTR ) = (
     )
 );
 
-    1;
+1;
