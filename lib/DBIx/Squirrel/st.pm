@@ -10,35 +10,21 @@ BEGIN {
     *DBIx::Squirrel::st::VERSION = *DBIx::Squirrel::VERSION;
 }
 
-use Carp 'croak';
+use DBIx::Squirrel::util 'throw', 'Dumper';
 use Scalar::Util 'reftype';
 
-sub _unpack_params_by_order {
-    my @params = do {
-        if ( my $order = shift ) {
-            if ( @_ ) {
-                my %order              = %{ $order };
-                my @names              = values %order;
-                my $numeric_name_count = grep { m/^:\d+$/ } @names;
-                if ( $numeric_name_count == @names ) {
-                    map { ( $order{ $_ } => $_[ $_ - 1 ] ) }
-                      keys %order;
-                } else {
-                    @_;
-                }
-            }
-        }
-    };
-    return @params;
-}
+use constant {
+    E_INV_POS_PH => 'Cannot bind invalid positional placeholder (%s)',
+    E_UNK_PH     => 'Cannot bind unknown placeholder (%s)',
+};
 
 sub execute {
     my $sth = shift;
     if ( @_ ) {
         $sth->bind( @_ );
     }
-    if ( $sth->{ Active } && $DBIx::Squirrel::FINISH_ACTIVE_ON_EXECUTE ) {
-        $sth->finish;
+    if ( $DBIx::Squirrel::FINISH_ACTIVE_ON_EXECUTE ) {
+        $sth->finish if $sth->{ Active };
     }
     return $sth->DBI::st::execute;
 }
@@ -46,29 +32,24 @@ sub execute {
 sub bind {
     my $sth = shift;
     if ( @_ ) {
-        if ( $sth->{ private_sq_params }
-            || ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) )
-        {
+        my $order = $sth->{ private_sq_params };
+        if ( $order || ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) ) {
             my %kv = do {
                 if ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) {
                     %{ +shift };
                 } elsif ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'ARRAY' ) {
-                    _unpack_params_by_order(
-                        $sth->{ private_sq_params },
-                        @{ +shift }
-                    );
+                    _format_params( $order, @{ +shift } );
                 } else {
-                    _unpack_params_by_order(
-                        $sth->{ private_sq_params },
-                        @_
-                    );
+                    _format_params( $order, @_ );
                 }
             };
             while ( my ( $k, $v ) = each %kv ) {
                 if ( $k ) {
-                    if ( $k =~ m/^[\:\$\?]?(\d+)$/ ) {
-                        if ( $1 > 0 ) {
-                            $sth->bind_param( $1, $v );
+                    if ( $k =~ m/^([\:\$\?]?(\d+))$/ ) {
+                        if ( $2 > 0 ) {
+                            $sth->bind_param( $2, $v );
+                        } else {
+                            throw E_INV_POS_PH, $1;
                         }
                     } else {
                         $sth->bind_param( $k, $v );
@@ -91,13 +72,37 @@ sub bind {
     return $sth;
 }
 
+sub _format_params {
+    my @params = do {
+        if ( my %order = _order_of_placeholders_if_positional( shift ) ) {
+            map { ( $order{ $_ } => $_[ $_ - 1 ] ) } keys %order;
+        } else {
+            @_;
+        }
+    };
+    return @params;
+}
+
+sub _order_of_placeholders_if_positional {
+    if ( my $order = shift ) {
+        if ( ref $order && reftype( $order ) eq 'HASH' ) {
+            my @names = values %{ $order };
+            my $count = grep { m/^[\:\$\?]\d+$/ } @names;
+            if ( $count == @names ) {
+                return %{ $order };
+            }
+        }
+    }
+    return;
+}
+
 sub bind_param {
     my $sth    = shift;
     my $param  = shift;
     my $result = do {
         if ( my $order = $sth->{ private_sq_params } ) {
-            if ( $param =~ m/^[\:\$\?]?(\d+)$/ ) {
-                $sth->DBI::st::bind_param( $1, @_ );
+            if ( $param =~ m/^([\:\$\?]?(\d+))$/ ) {
+                $sth->DBI::st::bind_param( $2, @_ );
             } else {
                 if ( substr( $param, 0, 1 ) ne ':' ) {
                     $param = ":$param";
@@ -106,7 +111,7 @@ sub bind_param {
                     grep { $order->{ $_ } eq $param } keys %{ $order },
                 );
                 unless ( @bound || $DBIx::Squirrel::RELAXED_PARAM_CHECKS ) {
-                    croak 'Cannot bind unknown placeholder "$param"';
+                    throw E_UNK_PH, $param;
                 }
                 $sth;
             }
