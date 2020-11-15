@@ -8,7 +8,7 @@ package DBIx::Squirrel;
 BEGIN {
     @DBIx::Squirrel::ISA                      = ( 'DBI' );
     $DBIx::Squirrel::VERSION                  = '2020.11.00';
-    $DBIx::Squirrel::RELAXED_PARAM_CHECKS     = 1;
+    $DBIx::Squirrel::RELAXED_PARAM_CHECKS     = 0;
     $DBIx::Squirrel::FINISH_ACTIVE_ON_EXECUTE = 1;
 }
 
