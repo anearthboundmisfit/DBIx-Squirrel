@@ -124,7 +124,9 @@ my ( $sql, $sth, $res, $arr );
 #
 
 diag 'test using ?-style (standard) placeholders';
-$sql = q/SELECT * FROM customers WHERE City = ? AND FirstName = ?/;
+$sql = << '';
+  SELECT * FROM customers WHERE City = ? AND FirstName = ?
+
 $sth = $dbh->prepare( $sql );
 isa_ok $sth, 'DBIx::Squirrel::st', 'got statement handle';
 $res = $sth->execute( 'Delhi', 'Manoj' );
@@ -140,7 +142,9 @@ $arr = $sth->fetchall_arrayref( {} );
 is_deeply $arr, $exp, 'got expected result';
 
 diag 'test using ?n-style (SQLite) placeholders';
-$sql = q/SELECT * FROM customers WHERE City = ?1 AND FirstName = ?2/;
+$sql = << '';
+  SELECT * FROM customers WHERE City = ?1 AND FirstName = ?2
+
 $sth = $dbh->prepare( $sql );
 isa_ok $sth, 'DBIx::Squirrel::st', 'got statement handle';
 $res = $sth->execute( 'Delhi', 'Manoj' );
@@ -156,7 +160,9 @@ $arr = $sth->fetchall_arrayref( {} );
 is_deeply $arr, $exp, 'got expected result';
 
 diag 'test using $n-style (PostgreSQL) placeholders';
-$sql = q/SELECT * FROM customers WHERE City = $1 AND FirstName = $2/;
+$sql = << '';
+  SELECT * FROM customers WHERE City = $1 AND FirstName = $2
+
 $sth = $dbh->prepare( $sql );
 isa_ok $sth, 'DBIx::Squirrel::st', 'got statement handle';
 $res = $sth->execute( 'Delhi', 'Manoj' );
@@ -172,7 +178,9 @@ $arr = $sth->fetchall_arrayref( {} );
 is_deeply $arr, $exp, 'got expected result';
 
 diag 'test using :n-style (Oracle) placeholders';
-$sql = q/SELECT * FROM customers WHERE City = :1 AND FirstName = :2/;
+$sql = << '';
+  SELECT * FROM customers WHERE City = :1 AND FirstName = :2
+
 $sth = $dbh->prepare( $sql );
 isa_ok $sth, 'DBIx::Squirrel::st', 'got statement handle';
 $res = $sth->execute( 'Delhi', 'Manoj' );
@@ -188,7 +196,9 @@ $arr = $sth->fetchall_arrayref( {} );
 is_deeply $arr, $exp, 'got expected result';
 
 diag 'test using :name-style (Oracle) placeholders';
-$sql = q/SELECT * FROM customers WHERE City = :city AND FirstName = :name/;
+$sql = << '';
+  SELECT * FROM customers WHERE City = :city AND FirstName = :name
+
 $sth = $dbh->prepare( $sql );
 isa_ok $sth, 'DBIx::Squirrel::st', 'got statement handle';
 $res = $sth->execute( city => 'Delhi', name => 'Manoj' );
