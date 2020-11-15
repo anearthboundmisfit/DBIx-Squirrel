@@ -10,6 +10,7 @@ BEGIN {
     *DBIx::Squirrel::st::VERSION = *DBIx::Squirrel::VERSION;
 }
 
+use namespace::autoclean;
 use DBIx::Squirrel::util 'throw', 'Dumper';
 use Scalar::Util 'reftype';
 
@@ -32,7 +33,7 @@ sub execute {
 sub bind {
     my $sth = shift;
     if ( @_ ) {
-        my $order = $sth->{ private_sq_params };
+        my $order = $sth->{ private_dbix_squirrel }{ params };
         if ( $order || ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) ) {
             my %kv = do {
                 if ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) {
@@ -100,7 +101,7 @@ sub bind_param {
     my $sth    = shift;
     my $param  = shift;
     my $result = do {
-        if ( my $order = $sth->{ private_sq_params } ) {
+        if ( my $order = $sth->{ private_dbix_squirrel }{ params } ) {
             if ( $param =~ m/^([\:\$\?]?(\d+))$/ ) {
                 $sth->DBI::st::bind_param( $2, @_ );
             } else {
