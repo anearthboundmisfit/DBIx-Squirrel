@@ -93,7 +93,10 @@ $cloned_ekorn_dbh_1->disconnect;
 $cloned_ekorn_dbh_2->disconnect;
 $ekorn_dbh->disconnect;
 
-no strict 'refs';
+# What follows are some basic checks that everything seems to work in the
+# prepare->execute->fetch workflow. We also want to take the opportunity to
+# check that cloning database handles really works, especially when cloning
+# standard DBI database handles.
 
 my $master = DBI->connect( @T_DB_CONNECT_ARGS );
 my $dbh    = DBIx::Squirrel->connect( $master );
