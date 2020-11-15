@@ -3,6 +3,8 @@ use warnings;
 
 package DBIx::Squirrel::util;
 
+## no critic (TestingAndDebugging::ProhibitNoStrict)
+
 BEGIN {
     require Exporter;
     @DBIx::Squirrel::util::ISA         = ( 'Exporter' );
@@ -11,5 +13,7 @@ BEGIN {
     @DBIx::Squirrel::util::EXPORT_OK
       = @{ $DBIx::Squirrel::util::EXPORT_TAGS{ all } };
 }
+
+## use critic
 
 1;
