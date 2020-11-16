@@ -4,10 +4,9 @@
 
 A module for working with databases.
 
-DBIx-Squirrel is a lightweight DBI extension, aimed at making programs that 
-work with databases (and the DBI) easier to write and maintain.
+DBIx-Squirrel is a lightweight DBI extension, aimed at making programs that work with databases (and the DBI) easier to write and maintain.
 
-## Synopsis
+### Synopsis
 
 ``` perl
 use DBIx::Squirrel;
@@ -51,5 +50,8 @@ $res = $sth->execute( [ v1=>'value_1', v2=>'value_2' ] );
 $res = $sth->execute( [ ':v1'=>'value_1', ':v2'=>'value_2' ] );
 $res = $sth->execute( { v1=>'value_1', v2=>'value_2' } );
 $res = $sth->execute( { ':v1'=>'value_1', ':v2'=>'value_2' } );
-
 ```
+
+### Description
+
+DBIx-Squirrel is a lightweight DBI extension, aimed at making programs that work with databases (and the DBI) easier to write and maintain.
