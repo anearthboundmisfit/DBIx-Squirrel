@@ -13,9 +13,7 @@ BEGIN {
 use namespace::autoclean;
 use DBI;
 use DBIx::Squirrel::db;
-use DBIx::Squirrel::util 'Dumper';
 use Scalar::Util 'blessed';
-use Storable qw/dclone/;
 
 sub connect_cached {
     my $handle = shift->DBI::connect_cached( @_ );
