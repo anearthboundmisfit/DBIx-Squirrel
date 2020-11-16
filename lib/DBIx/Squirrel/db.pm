@@ -13,23 +13,6 @@ BEGIN {
 use namespace::autoclean;
 use DBIx::Squirrel::st;
 
-sub _get_param_order {
-    my $order = do {
-        my %order;
-        if ( my $sql = shift ) {
-            my @params = $sql =~ m{[\:\$\?]\w+\b}g;
-            if ( my $count = @params ) {
-                $sql =~ s{[\:\$\?]\w+\b}{?}g;
-                for ( my $p = 0 ; $p < $count ; $p += 1 ) {
-                    $order{ 1 + $p } = $params[ $p ];
-                }
-            }
-        }
-        %order ? \%order : undef;
-    };
-    return $order;
-}
-
 sub prepare_cached {
     my $dbh = shift;
     my $sql = shift;
@@ -67,6 +50,23 @@ sub prepare {
         bless $sth, 'DBIx::Squirrel::st';
     }
     return $sth;
+}
+
+sub _get_param_order {
+    my $order = do {
+        my %order;
+        if ( my $sql = shift ) {
+            my @params = $sql =~ m{[\:\$\?]\w+\b}g;
+            if ( my $count = @params ) {
+                $sql =~ s{[\:\$\?]\w+\b}{?}g;
+                for ( my $p = 0 ; $p < $count ; $p += 1 ) {
+                    $order{ 1 + $p } = $params[ $p ];
+                }
+            }
+        }
+        %order ? \%order : undef;
+    };
+    return $order;
 }
 
 ## use critic
