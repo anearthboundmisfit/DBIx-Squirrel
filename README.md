@@ -50,6 +50,16 @@ $res = $sth->execute( { v1=>'value_1', v2=>'value_2' } );
 $res = $sth->execute( { ':v1'=>'value_1', ':v2'=>'value_2' } );
 ```
 
-### Description
+## Description
 
 DBIx-Squirrel is a lightweight DBI extension, aimed at making programs that work with databases (and the DBI) easier to write and maintain.
+
+### Feature highlights
+
+- **Like DBI but easier**<br>Still looks and feels like plain old DBI
+when you need it to, but makes life easier when you want simplicity.
+- **Connect to database handles**<br>The familiar `connect` method may
+also be used to clone and connect to other database handles, including those created using DBI.
+- **Parameter placeholders**<br>A total of five different placeholder styles are supported, offering greater flexibility and portability.
+- **Parameter binding**<br>Common sense, simple binding of parameters
+to placeholders. 
