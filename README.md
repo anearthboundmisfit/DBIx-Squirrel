@@ -21,32 +21,32 @@ $clone = DBIx::Squirrel->connect($dbh);
 $sth = $dbh->prepare(<< '');
     SELECT * FROM table WHERE column_1 = ? AND column_2 = ?
 
-$res = $sth->execute('value_1', 'value_2');
+$res = $sth->execute( 'value_1', 'value_2' );
 $res = $sth->execute( [ 'value_1', 'value_2' ] );
 
 $sth = $dbh->prepare(<< '');
     SELECT * FROM table WHERE column_1 = ?1 AND column_2 = ?2
 
-$res = $sth->execute('value_1', 'value_2');
+$res = $sth->execute( 'value_1', 'value_2' );
 $res = $sth->execute( [ 'value_1', 'value_2' ] );
 
 $sth = $dbh->prepare(<< '');
     SELECT * FROM table WHERE column_1 = $1 AND column_2 = $2
 
-$res = $sth->execute('value_1', 'value_2');
+$res = $sth->execute( 'value_1', 'value_2' );
 $res = $sth->execute( [ 'value_1', 'value_2' ] );
 
 $sth = $dbh->prepare(<< '');
     SELECT * FROM table WHERE column_1 = :1 AND column_2 = :2
 
-$res = $sth->execute('value_1', 'value_2');
+$res = $sth->execute( 'value_1', 'value_2' );
 $res = $sth->execute( [ 'value_1', 'value_2' ] );
 
 $sth = $dbh->prepare(<< '');
     SELECT * FROM table WHERE column_1 = :v1 AND column_2 = :v2
 
-$res = $sth->execute(v1=>'value_1', v2=>'value_2');
-$res = $sth->execute(':v1'=>'value_1', ':v2'=>'value_2');
+$res = $sth->execute( v1=>'value_1', v2=>'value_2' );
+$res = $sth->execute( ':v1'=>'value_1', ':v2'=>'value_2' );
 $res = $sth->execute( [ v1=>'value_1', v2=>'value_2' ] );
 $res = $sth->execute( [ ':v1'=>'value_1', ':v2'=>'value_2' ] );
 $res = $sth->execute( { v1=>'value_1', v2=>'value_2' } );
