@@ -11,7 +11,7 @@ BEGIN {
 }
 
 use namespace::autoclean;
-use DBIx::Squirrel::util 'throw', 'Dumper';
+use DBIx::Squirrel::util 'throw';
 use Scalar::Util 'reftype';
 
 use constant {
