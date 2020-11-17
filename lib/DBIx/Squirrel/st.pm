@@ -11,6 +11,7 @@ BEGIN {
 }
 
 use namespace::autoclean;
+use DBIx::Squirrel::it;
 use DBIx::Squirrel::util 'throw';
 use Scalar::Util 'reftype';
 
@@ -18,6 +19,10 @@ use constant {
     E_INV_POS_PH => 'Cannot bind invalid positional placeholder (%s)',
     E_UNK_PH     => 'Cannot bind unknown placeholder (%s)',
 };
+
+sub iterate {
+    return DBIx::Squirrel::it->new( @_ );
+}
 
 sub execute {
     my $sth = shift;
