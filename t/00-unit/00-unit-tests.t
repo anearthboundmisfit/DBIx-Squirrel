@@ -224,12 +224,12 @@ is_deeply $arr, $exp, 'got expected result';
 
 diag 'test iterator';
 $sql = << '';
-  SELECT * FROM customers WHERE City = :city AND FirstName = :name
+  SELECT * FROM customers
 
 $sth = $dbh->prepare( $sql );
 isa_ok $sth, 'DBIx::Squirrel::st', 'got statement handle';
 
-$itor = $sth->iterate( { city => 'Delhi', name => 'Manoj' } );
+$itor = $sth->iterate;
 is $itor->{ Slice },   $itor->DEFAULT_SLICE,    'initial slice ok';
 is $itor->{ MaxRows }, $itor->DEFAULT_MAX_ROWS, 'initial max rows ok';
 
@@ -248,6 +248,9 @@ is $itor->{ MaxRows }, 20, 'max rows ok';
 $itor->set_slice->set_max_rows;
 is $itor->{ Slice },   $itor->DEFAULT_SLICE,    'slice ok';
 is $itor->{ MaxRows }, $itor->DEFAULT_MAX_ROWS, 'max rows ok';
+
+$itor->reset( {}, 10 );
+$itor->execute;
 
 explain { "sth_ParamValues" => $sth->{ ParamValues } };
 diag $itor->_dump_state;
