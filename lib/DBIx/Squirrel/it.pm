@@ -39,9 +39,7 @@ sub DESTROY {
     local ( $., $@, $!, $^E, $?, $_ );
     my ( $id, $self ) = shift->id;
     if ( my $c = $itor{ $id } ) {
-        if ( my $sth = $c->{ st } ) {
-            $sth->finish if $sth->{ Active };
-        }
+        $self->finish;
         delete $itor{ $id };
     }
     return;
