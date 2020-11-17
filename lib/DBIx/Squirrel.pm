@@ -19,6 +19,11 @@ BEGIN {
     *connect_cached = *DBIx::Squirrel::dr::connect_cached;
     *connect        = *DBIx::Squirrel::dr::connect;
     *connect_clone  = *DBIx::Squirrel::dr::connect_clone;
+    *err            = *DBI::err;
+    *errstr         = *DBI::errstr;
+    *rows           = *DBI::rows;
+    *lasth          = *DBI::lasth;
+    *state          = *DBI::state;
 }
 
 ## use critic
