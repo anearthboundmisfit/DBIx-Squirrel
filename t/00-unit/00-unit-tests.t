@@ -12,6 +12,8 @@ use DBIx::Squirrel;
 use lib realpath( "$FindBin::Bin/../lib" );
 use T::Database ':all';
 
+$| = 1;
+
 # Create to references to a cached DBIx::Squirrel database connection.
 #
 # Since the connection is cached, both references must point to the same
@@ -117,7 +119,7 @@ my $exp    = [ {
     }
 ];
 
-my ( $sql, $sth, $res, $arr );
+my ( $sql, $sth, $res, $arr, $itor );
 
 # We are testing that we can prepare and execute a statement, and get the
 # expected results back.
@@ -219,6 +221,17 @@ $res = $sth->execute( { city => 'Delhi', name => 'Manoj' } );
 is $res, '0E0', 'got valid result';
 $arr = $sth->fetchall_arrayref( {} );
 is_deeply $arr, $exp, 'got expected result';
+
+diag 'test iterator';
+$sql = << '';
+  SELECT * FROM customers WHERE City = :city AND FirstName = :name
+
+$sth = $dbh->prepare( $sql );
+isa_ok $sth, 'DBIx::Squirrel::st', 'got statement handle';
+
+$itor = $sth->iterate({ city => 'Delhi', name => 'Manoj' })->reset({});
+explain { "sth_ParamValues" => $sth->{ ParamValues } };
+diag $itor->_dump_state;
 
 $dbh->disconnect;
 
