@@ -78,6 +78,7 @@ sub new {
                 mr => $self->set_max_rows->{ MaxRows },
                 ex => undef,
                 fi => undef,
+                bu => undef,
             };
             $self;
         } else {
@@ -90,9 +91,10 @@ sub new {
 sub reset {
     my ( $c, $self, $id ) = shift->context;
     #
-    # We allow ($slice, $max_rows), ($max_rows, $slice), one or the other, or
-    # none when using reset to modify the disposition and number of rows in
-    # fetches.
+    # When using the "reset" method to modify the disposition and number of
+    # rows fetched at a time, we allow ($slice, $max_rows), ($max_rows, $slice),
+    # either one or the other, or none. In the case of none, the only action
+    # performed is to finish the statement and reset the iterator.
     #
     if ( @_ ) {
         if ( ref $_[ 0 ] ) {
@@ -156,11 +158,56 @@ sub finish {
     return $self;
 }
 
-sub next {
-    my ( $id, $self ) = shift->id;
+sub single {
+    my ( $c, $self, $id ) = shift->context;
+    my $res = $self->execute( @_ );
+    return;
 }
 
-sub sth { $_[ 0 ]->c->{ st } }
+sub execute {
+    my ( $c, $self, $id ) = shift->context;
+    if ( $c->{ ex } || $c->{ fi } ) {
+        $self->reset;
+    }
+    my $res = do {
+        if ( @_ ) {
+            $self->sth->execute( @_ );
+        } else {
+            $self->sth->execute( @{ $c->{ bp } } );
+        }
+    };
+    if ( $res ) {
+        $c->{ ex } = 1;
+        $c->{ bu } = $self->sth->fetchall_arrayref( $c->{ sl }, $c->{ mr } );
+    } else {
+        $c->{ ex } = 0;
+    }
+    return $res;
+}
+
+sub sth { shift->c->{ st } }
+
+sub next {
+    my ( $c, $self, $id ) = shift->context;
+    return;
+}
+
+sub more {
+    my ( $c, $self, $id ) = shift->context;
+    return;
+}
+
+sub first {
+    my ( $c, $self, $id ) = shift->context;
+    my $res = $self->reset( @_ )->execute;
+    return;
+}
+
+sub all {
+    my ( $c, $self, $id ) = shift->context;
+    my $res = $self->reset( @_ )->execute;
+    return;
+}
 
 ## use critic
 
