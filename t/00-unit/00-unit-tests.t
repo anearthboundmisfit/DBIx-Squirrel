@@ -229,7 +229,26 @@ $sql = << '';
 $sth = $dbh->prepare( $sql );
 isa_ok $sth, 'DBIx::Squirrel::st', 'got statement handle';
 
-$itor = $sth->iterate({ city => 'Delhi', name => 'Manoj' })->reset({});
+$itor = $sth->iterate( { city => 'Delhi', name => 'Manoj' } );
+is $itor->{ Slice },   $itor->DEFAULT_SLICE,    'initial slice ok';
+is $itor->{ MaxRows }, $itor->DEFAULT_MAX_ROWS, 'initial max rows ok';
+
+$itor->reset( { foo => 1 }, 10 );
+is_deeply $itor->{ Slice }, { foo => 1 }, 'slice ok';
+is $itor->{ MaxRows }, 10, 'max rows ok';
+
+$itor->reset( 20, { foo => 2 } );
+is_deeply $itor->{ Slice }, { foo => 2 }, 'slice ok';
+is $itor->{ MaxRows }, 20, 'max rows ok';
+
+$itor->reset;
+is_deeply $itor->{ Slice }, { foo => 2 }, 'slice ok';
+is $itor->{ MaxRows }, 20, 'max rows ok';
+
+$itor->set_slice->set_max_rows;
+is $itor->{ Slice },   $itor->DEFAULT_SLICE,    'slice ok';
+is $itor->{ MaxRows }, $itor->DEFAULT_MAX_ROWS, 'max rows ok';
+
 explain { "sth_ParamValues" => $sth->{ ParamValues } };
 diag $itor->_dump_state;
 
