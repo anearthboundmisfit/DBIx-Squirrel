@@ -165,7 +165,7 @@ sub _get_row {
     my ( $c, $self ) = shift->context;
     return if $c->{ fi } || ( !$c->{ ex } && !$self->execute );
     my $row = do {
-        $self->charge_buffer unless $self->buffer_empty;
+        $self->charge_buffer if $self->buffer_empty;
         if ( $self->buffer_empty ) {
             $c->{ fi } = 1;
             undef;
