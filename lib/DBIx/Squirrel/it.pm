@@ -280,7 +280,27 @@ sub remaining {
     return wantarray ? @{ $rows } : $rows;
 }
 
-sub next { $_[ 0 ]->_get_row }
+sub next {
+    my $self = shift;
+    if ( @_ ) {
+        if ( ref $_[ 0 ] ) {
+            $self->set_slice( shift );
+            if ( @_ ) {
+                $self->set_max_rows( shift );
+            } else {
+                $self->set_max_rows;
+            }
+        } else {
+            $self->set_max_rows( shift );
+            if ( @_ ) {
+                $self->set_slice( shift );
+            } else {
+                $self->set_slice;
+            }
+        }
+    }
+    return $self->_get_row;
+}
 
 sub sth { $_[ 0 ]->c->{ st } }
 
