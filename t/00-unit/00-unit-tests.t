@@ -5,6 +5,7 @@ BEGIN {
 
 use autobox::Core;
 use Test::Most;
+use Capture::Tiny 'capture_stdout', 'capture_stderr';
 use Cwd 'realpath';
 use DBIx::Squirrel::util ':all';
 use DBIx::Squirrel;
@@ -119,7 +120,7 @@ my $exp    = [ {
     }
 ];
 
-my ( $sql, $sth, $res, $arr, $itor );
+my ( $sql, $sth, $res, $arr, $itor, $n, $stdout, $stderr, $row, @rows );
 
 # We are testing that we can prepare and execute a statement, and get the
 # expected results back.
@@ -230,8 +231,10 @@ $sth = $dbh->prepare( $sql );
 isa_ok $sth, 'DBIx::Squirrel::st', 'got statement handle';
 
 $itor = $sth->iterate;
-is $itor->{ Slice },   $itor->DEFAULT_SLICE,    'initial slice ok';
-is $itor->{ MaxRows }, $itor->DEFAULT_MAX_ROWS, 'initial max rows ok';
+is $itor->{ Slice }, $DBIx::Squirrel::it::DEFAULT_SLICE,
+  'initial slice ok';
+is $itor->{ MaxRows }, $DBIx::Squirrel::it::DEFAULT_MAX_ROWS,
+  'initial max rows ok';
 
 $itor->reset( { foo => 1 }, 10 );
 is_deeply $itor->{ Slice }, { foo => 1 }, 'slice ok';
@@ -246,14 +249,76 @@ is_deeply $itor->{ Slice }, { foo => 2 }, 'slice ok';
 is $itor->{ MaxRows }, 20, 'max rows ok';
 
 $itor->set_slice->set_max_rows;
-is $itor->{ Slice },   $itor->DEFAULT_SLICE,    'slice ok';
-is $itor->{ MaxRows }, $itor->DEFAULT_MAX_ROWS, 'max rows ok';
+is $itor->{ Slice }, $DBIx::Squirrel::it::DEFAULT_SLICE,
+  'slice ok';
+is $itor->{ MaxRows }, $DBIx::Squirrel::it::DEFAULT_MAX_ROWS,
+  'max rows ok';
 
-$itor->reset( {}, 10 );
-$itor->execute;
+( $exp, $stderr, $row ) = ( {
+        Address      => "Av. Brigadeiro Faria Lima, 2170",
+        City         => "S\x{e3}o Jos\x{e9} dos Campos",
+        Company      => "Embraer - Empresa Brasileira de Aeron\x{e1}utica S.A.",
+        Country      => "Brazil",
+        CustomerId   => 1,
+        Email        => "luisg\@embraer.com.br",
+        Fax          => "+55 (12) 3923-5566",
+        FirstName    => "Lu\x{ed}s",
+        LastName     => "Gon\x{e7}alves",
+        Phone        => "+55 (12) 3923-5555",
+        PostalCode   => "12227-000",
+        State        => "SP",
+        SupportRepId => 3,
+    },
+    capture_stderr {
+        $itor->reset( {}, 1 );
+        $itor->single;
+    },
+);
+is_deeply $row, $exp, 'single ok';
+is $stderr, '', 'warning suppressed (1-row buffer)';
 
-explain { "sth_ParamValues" => $sth->{ ParamValues } };
-diag $itor->_dump_state;
+( $stderr, $row ) = (
+    capture_stderr {
+        $itor->reset( {}, 10 );
+        $itor->single;
+    },
+);
+is_deeply $row, $exp, 'single ok';
+like $stderr, qr/Query returned more than one row/s,
+  'got expected warning (n-row buffer)';
+
+$row = do {
+    $itor->reset( {}, 1 );
+    $itor->first;
+};
+is_deeply $row, $exp, 'first ok';
+
+$row = do {
+    $itor->reset( {}, 10 );
+    $itor->first;
+};
+is_deeply $row, $exp, 'first ok';
+
+( $exp, $row ) = ( {
+        Address      => "Theodor-Heuss-Stra\x{df}e 34",
+        City         => "Stuttgart",
+        Company      => undef,
+        Country      => "Germany",
+        CustomerId   => 2,
+        Email        => "leonekohler\@surfeu.de",
+        Fax          => undef,
+        FirstName    => "Leonie",
+        LastName     => "K\x{f6}hler",
+        Phone        => "+49 0711 2842222",
+        PostalCode   => 70174,
+        State        => undef,
+        SupportRepId => 5,
+    },
+    $itor->next
+);
+is_deeply $row, $exp, 'next ok';
+
+print Dumper $row;
 
 $dbh->disconnect;
 
