@@ -259,6 +259,17 @@ sub find {
     return $res;
 }
 
+sub all {
+    my $self = shift;
+    return do {
+        if ( $self->execute( @_ ) ) {
+            $self->remaining;
+        } else {
+            wantarray ? () : undef;
+        }
+    };
+}
+
 sub remaining {
     my ( $c, $self ) = shift->context;
     return if $c->{ fi } || ( !$c->{ ex } && !$self->execute );
@@ -267,12 +278,6 @@ sub remaining {
     $c->{ rc } = $c->{ rf };
     $c->{ bu } = undef;
     return wantarray ? @{ $rows } : $rows;
-}
-
-sub all {
-    my $self = shift;
-    return $self->remaining if $self->execute( @_ );
-    return;
 }
 
 sub next { $_[ 0 ]->_get_row }
