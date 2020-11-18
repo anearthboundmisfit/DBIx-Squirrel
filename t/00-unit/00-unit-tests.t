@@ -225,12 +225,12 @@ is_deeply $arr, $exp, 'got expected result';
 
 diag 'test iterator';
 $sql = << '';
-  SELECT * FROM customers
+  SELECT * FROM customers WHERE Country LIKE ?
 
 $sth = $dbh->prepare( $sql );
 isa_ok $sth, 'DBIx::Squirrel::st', 'got statement handle';
 
-$itor = $sth->iterate;
+$itor = $sth->iterate( 'I%' );
 is $itor->{ Slice }, $DBIx::Squirrel::it::DEFAULT_SLICE,
   'initial slice ok';
 is $itor->{ MaxRows }, $DBIx::Squirrel::it::DEFAULT_MAX_ROWS,
@@ -254,19 +254,333 @@ is $itor->{ Slice }, $DBIx::Squirrel::it::DEFAULT_SLICE,
 is $itor->{ MaxRows }, $DBIx::Squirrel::it::DEFAULT_MAX_ROWS,
   'max rows ok';
 
+$itor->reset( {}, 10 );
+
+( $exp, $row ) = ( {
+        Address      => "3 Chatham Street",
+        City         => "Dublin",
+        Company      => undef,
+        Country      => "Ireland",
+        CustomerId   => 46,
+        Email        => "hughoreilly\@apple.ie",
+        Fax          => undef,
+        FirstName    => "Hugh",
+        LastName     => "O'Reilly",
+        Phone        => "+353 01 6792424",
+        PostalCode   => undef,
+        State        => "Dublin",
+        SupportRepId => 3,
+    },
+    do {
+        $itor->find;
+    }
+);
+is_deeply $row, $exp, 'find ok'
+  or print "Got:\n" . Dumper( $row );
+
+( $exp, $row ) = ( {
+        Address      => "3 Chatham Street",
+        City         => "Dublin",
+        Company      => undef,
+        Country      => "Ireland",
+        CustomerId   => 46,
+        Email        => "hughoreilly\@apple.ie",
+        Fax          => undef,
+        FirstName    => "Hugh",
+        LastName     => "O'Reilly",
+        Phone        => "+353 01 6792424",
+        PostalCode   => undef,
+        State        => "Dublin",
+        SupportRepId => 3,
+    },
+    do {
+        $itor->find;
+    }
+);
+is_deeply $row, $exp, 'find again ok'
+  or print "Got:\n" . Dumper( $row );
+
+( $exp, $row ) = ( {
+        Address      => "4, Rue Milton",
+        City         => "Paris",
+        Company      => undef,
+        Country      => "France",
+        CustomerId   => 39,
+        Email        => "camille.bernard\@yahoo.fr",
+        Fax          => undef,
+        FirstName    => "Camille",
+        LastName     => "Bernard",
+        Phone        => "+33 01 49 70 65 65",
+        PostalCode   => 75009,
+        State        => undef,
+        SupportRepId => 4,
+    },
+    do {
+        $itor->find( 'F%' );
+    }
+);
+is_deeply $row, $exp, 'find with different params ok'
+  or print "Got:\n" . Dumper( $row );
+
+( $exp, @rows ) = ( {
+        Address      => "3 Chatham Street",
+        City         => "Dublin",
+        Company      => undef,
+        Country      => "Ireland",
+        CustomerId   => 46,
+        Email        => "hughoreilly\@apple.ie",
+        Fax          => undef,
+        FirstName    => "Hugh",
+        LastName     => "O'Reilly",
+        Phone        => "+353 01 6792424",
+        PostalCode   => undef,
+        State        => "Dublin",
+        SupportRepId => 3,
+    },
+    do {
+        $itor->find;
+    }
+);
+is_deeply \@rows, [ $exp ], 'find ok'
+  or print "Got:\n" . Dumper( \@rows );
+
+( $exp, @rows ) = ( {
+        Address      => "3 Chatham Street",
+        City         => "Dublin",
+        Company      => undef,
+        Country      => "Ireland",
+        CustomerId   => 46,
+        Email        => "hughoreilly\@apple.ie",
+        Fax          => undef,
+        FirstName    => "Hugh",
+        LastName     => "O'Reilly",
+        Phone        => "+353 01 6792424",
+        PostalCode   => undef,
+        State        => "Dublin",
+        SupportRepId => 3,
+    },
+    do {
+        $itor->find;
+    }
+);
+is_deeply \@rows, [ $exp ], 'find again ok'
+  or print "Got:\n" . Dumper( \@rows );
+
+( $exp, @rows ) = ( {
+        Address      => "4, Rue Milton",
+        City         => "Paris",
+        Company      => undef,
+        Country      => "France",
+        CustomerId   => 39,
+        Email        => "camille.bernard\@yahoo.fr",
+        Fax          => undef,
+        FirstName    => "Camille",
+        LastName     => "Bernard",
+        Phone        => "+33 01 49 70 65 65",
+        PostalCode   => 75009,
+        State        => undef,
+        SupportRepId => 4,
+    },
+    do {
+        $itor->find( 'F%' );
+    }
+);
+is_deeply \@rows, [ $exp ], 'find with different params ok'
+  or print "Got:\n" . Dumper( \@rows );
+
+( $exp, $row ) = ( {
+        Address      => "3 Chatham Street",
+        City         => "Dublin",
+        Company      => undef,
+        Country      => "Ireland",
+        CustomerId   => 46,
+        Email        => "hughoreilly\@apple.ie",
+        Fax          => undef,
+        FirstName    => "Hugh",
+        LastName     => "O'Reilly",
+        Phone        => "+353 01 6792424",
+        PostalCode   => undef,
+        State        => "Dublin",
+        SupportRepId => 3,
+    },
+    do {
+        $itor->all;
+    }
+);
+is_deeply $row, $exp, 'all ok'
+  or print "Got:\n" . Dumper( $row );
+
+( $exp, $row ) = ( {
+        Address      => "3 Chatham Street",
+        City         => "Dublin",
+        Company      => undef,
+        Country      => "Ireland",
+        CustomerId   => 46,
+        Email        => "hughoreilly\@apple.ie",
+        Fax          => undef,
+        FirstName    => "Hugh",
+        LastName     => "O'Reilly",
+        Phone        => "+353 01 6792424",
+        PostalCode   => undef,
+        State        => "Dublin",
+        SupportRepId => 3,
+    },
+    do {
+        $itor->all;
+    }
+);
+is_deeply $row, $exp, 'all again ok'
+  or print "Got:\n" . Dumper( $row );
+
+( $exp, $row ) = ( {
+        Address      => "4, Rue Milton",
+        City         => "Paris",
+        Company      => undef,
+        Country      => "France",
+        CustomerId   => 39,
+        Email        => "camille.bernard\@yahoo.fr",
+        Fax          => undef,
+        FirstName    => "Camille",
+        LastName     => "Bernard",
+        Phone        => "+33 01 49 70 65 65",
+        PostalCode   => 75009,
+        State        => undef,
+        SupportRepId => 4,
+    },
+    do {
+        $itor->all( 'F%' );
+    }
+);
+is_deeply $row, $exp, 'all with different params ok'
+  or print "Got:\n" . Dumper( $row );
+
+( $exp, @rows ) = ( [ {
+            Address      => "3 Chatham Street",
+            City         => "Dublin",
+            Company      => undef,
+            Country      => "Ireland",
+            CustomerId   => 46,
+            Email        => "hughoreilly\@apple.ie",
+            Fax          => undef,
+            FirstName    => "Hugh",
+            LastName     => "O'Reilly",
+            Phone        => "+353 01 6792424",
+            PostalCode   => undef,
+            State        => "Dublin",
+            SupportRepId => 3,
+        },
+        {
+            Address      => "3,Raj Bhavan Road",
+            City         => "Bangalore",
+            Company      => undef,
+            Country      => "India",
+            CustomerId   => 59,
+            Email        => "puja_srivastava\@yahoo.in",
+            Fax          => undef,
+            FirstName    => "Puja",
+            LastName     => "Srivastava",
+            Phone        => "+91 080 22289999",
+            PostalCode   => 560001,
+            State        => undef,
+            SupportRepId => 3,
+        },
+    ],
+    do {
+        $itor->all;
+    }
+);
+is_deeply [ @rows[ 0, -1 ] ], $exp, 'all ok'
+  or print "Got:\n" . Dumper( [ @rows[ 0, -1 ] ] );
+
+( $exp, @rows ) = ( [ {
+            Address      => "3 Chatham Street",
+            City         => "Dublin",
+            Company      => undef,
+            Country      => "Ireland",
+            CustomerId   => 46,
+            Email        => "hughoreilly\@apple.ie",
+            Fax          => undef,
+            FirstName    => "Hugh",
+            LastName     => "O'Reilly",
+            Phone        => "+353 01 6792424",
+            PostalCode   => undef,
+            State        => "Dublin",
+            SupportRepId => 3,
+        },
+        {
+            Address      => "3,Raj Bhavan Road",
+            City         => "Bangalore",
+            Company      => undef,
+            Country      => "India",
+            CustomerId   => 59,
+            Email        => "puja_srivastava\@yahoo.in",
+            Fax          => undef,
+            FirstName    => "Puja",
+            LastName     => "Srivastava",
+            Phone        => "+91 080 22289999",
+            PostalCode   => 560001,
+            State        => undef,
+            SupportRepId => 3,
+        },
+    ],
+    do {
+        $itor->all;
+    }
+);
+is_deeply [ @rows[ 0, -1 ] ], $exp, 'all again ok'
+  or print "Got:\n" . Dumper( [ @rows[ 0, -1 ] ] );
+
+( $exp, @rows ) = ( [ {
+            Address      => "4, Rue Milton",
+            City         => "Paris",
+            Company      => undef,
+            Country      => "France",
+            CustomerId   => 39,
+            Email        => "camille.bernard\@yahoo.fr",
+            Fax          => undef,
+            FirstName    => "Camille",
+            LastName     => "Bernard",
+            Phone        => "+33 01 49 70 65 65",
+            PostalCode   => 75009,
+            State        => undef,
+            SupportRepId => 4,
+        },
+        {
+            Address      => "Porthaninkatu 9",
+            City         => "Helsinki",
+            Company      => undef,
+            Country      => "Finland",
+            CustomerId   => 44,
+            Email        => "terhi.hamalainen\@apple.fi",
+            Fax          => undef,
+            FirstName    => "Terhi",
+            LastName     => "H\x{e4}m\x{e4}l\x{e4}inen",
+            Phone        => "+358 09 870 2000",
+            PostalCode   => "00530",
+            State        => undef,
+            SupportRepId => 3,
+        },
+    ],
+    do {
+        $itor->all( 'F%' );
+    }
+);
+is_deeply [ @rows[ 0, -1 ] ], $exp, 'all with different params ok'
+  or print "Got:\n" . Dumper( [ @rows[ 0, -1 ] ] );
+
 ( $exp, $stderr, $row ) = ( {
-        Address      => "Av. Brigadeiro Faria Lima, 2170",
-        City         => "S\x{e3}o Jos\x{e9} dos Campos",
-        Company      => "Embraer - Empresa Brasileira de Aeron\x{e1}utica S.A.",
-        Country      => "Brazil",
-        CustomerId   => 1,
-        Email        => "luisg\@embraer.com.br",
-        Fax          => "+55 (12) 3923-5566",
-        FirstName    => "Lu\x{ed}s",
-        LastName     => "Gon\x{e7}alves",
-        Phone        => "+55 (12) 3923-5555",
-        PostalCode   => "12227-000",
-        State        => "SP",
+        Address      => "3 Chatham Street",
+        City         => "Dublin",
+        Company      => undef,
+        Country      => "Ireland",
+        CustomerId   => 46,
+        Email        => "hughoreilly\@apple.ie",
+        Fax          => undef,
+        FirstName    => "Hugh",
+        LastName     => "O'Reilly",
+        Phone        => "+353 01 6792424",
+        PostalCode   => undef,
+        State        => "Dublin",
         SupportRepId => 3,
     },
     capture_stderr {
@@ -274,7 +588,8 @@ is $itor->{ MaxRows }, $DBIx::Squirrel::it::DEFAULT_MAX_ROWS,
         $itor->single;
     },
 );
-is_deeply $row, $exp, 'single ok';
+is_deeply $row, $exp, 'single ok'
+  or print "Got:\n" . Dumper( $row );
 is $stderr, '', 'warning suppressed (1-row buffer)';
 
 ( $stderr, $row ) = (
@@ -300,25 +615,26 @@ $row = do {
 is_deeply $row, $exp, 'first ok';
 
 ( $exp, $row ) = ( {
-        Address      => "Theodor-Heuss-Stra\x{df}e 34",
-        City         => "Stuttgart",
+        Address      => "Via Degli Scipioni, 43",
+        City         => "Rome",
         Company      => undef,
-        Country      => "Germany",
-        CustomerId   => 2,
-        Email        => "leonekohler\@surfeu.de",
+        Country      => "Italy",
+        CustomerId   => 47,
+        Email        => "lucas.mancini\@yahoo.it",
         Fax          => undef,
-        FirstName    => "Leonie",
-        LastName     => "K\x{f6}hler",
-        Phone        => "+49 0711 2842222",
-        PostalCode   => 70174,
-        State        => undef,
+        FirstName    => "Lucas",
+        LastName     => "Mancini",
+        Phone        => "+39 06 39733434",
+        PostalCode   => "00192",
+        State        => "RM",
         SupportRepId => 5,
     },
-    $itor->next
+    do {
+        $itor->next;
+    }
 );
-is_deeply $row, $exp, 'next ok';
-
-print Dumper $row;
+is_deeply $row, $exp, 'next ok'
+  or print "Got:\n" . Dumper( $row );
 
 $dbh->disconnect;
 
