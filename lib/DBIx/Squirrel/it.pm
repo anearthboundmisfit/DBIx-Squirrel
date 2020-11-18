@@ -247,10 +247,16 @@ sub single {
     return $res;
 }
 
-sub all {
+sub find {
     my $self = shift;
-    $self->reset( @_ );
-    return $self->remaining;
+    my $res  = do {
+        if ( my $row_count = $self->execute( @_ ) ) {
+            $self->_get_row;
+        } else {
+            undef;
+        }
+    };
+    return $res;
 }
 
 sub remaining {
@@ -261,6 +267,12 @@ sub remaining {
     $c->{ rc } = $c->{ rf };
     $c->{ bu } = undef;
     return wantarray ? @{ $rows } : $rows;
+}
+
+sub all {
+    my $self = shift;
+    return $self->remaining if $self->execute( @_ );
+    return;
 }
 
 sub next { $_[ 0 ]->_get_row }
