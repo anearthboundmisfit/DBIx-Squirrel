@@ -14,6 +14,7 @@ BEGIN {
             qw/
               Dumper
               throw
+              whine
               /
         ]
     );
@@ -34,13 +35,32 @@ sub throw {
                     join( '', map { $_ // '' } @_ );
                 }
             } else {
-                shift || 'Died';
+                shift || 'This script is pining for the fjords';
             }
         } else {
-            $@ || $_ || 'Died';
+            $@ || $_ || 'This script is pining for the fjords';
         }
     };
     goto &Carp::confess;
+}
+
+sub whine {
+    @_ = do {
+        if ( @_ ) {
+            if ( @_ > 1 ) {
+                if ( my $format = shift ) {
+                    sprintf( $format, @_ );
+                } else {
+                    join( '', map { $_ // '' } @_ );
+                }
+            } else {
+                shift || 'Careful now';
+            }
+        } else {
+            $@ || $_ || 'Careful now';
+        }
+    };
+    goto &Carp::cluck;
 }
 
 ## use critic
