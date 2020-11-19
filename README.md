@@ -101,11 +101,10 @@ $row = $itor->first;
 
 ## Description
 
-DBIx-Squirrel is a lightweight DBI extension that makes it easier to write and maintain programs that work with databases. While it works just like DBI
-out-of-the-box, offering comfortable familiarity, it also offers a slate
-of graceful enhancements when they are needed.
+DBIx-Squirrel is a lightweight DBI extension that makes it easier to write and maintain programs that work with databases. It works just like DBI right out
+of the box (offering comfortable familiarity), and offers a slate of graceful enhancements when they are needed.
 
-Feature highlights:
+**Highlights**
 
 - Connect to database handles — pass a database connection handle to the
 **`connect`** method to clone it. Database connections opened using standard
