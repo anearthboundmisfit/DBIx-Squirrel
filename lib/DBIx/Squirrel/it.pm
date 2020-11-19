@@ -133,6 +133,7 @@ sub finish {
 }
 
 sub first {
+    local $_;
     my ( $c, $self, $id ) = shift->_context;
     $self->reset( @_ );
     return $self->_get_row;
@@ -246,6 +247,7 @@ sub _buffer_empty {
 }
 
 sub single {
+    local $_;
     my $self = shift;
     my $res  = do {
         if ( my $row_count = $self->execute( @_ ) ) {
@@ -259,6 +261,7 @@ sub single {
 }
 
 sub find {
+    local $_;
     my $self = shift;
     my $res  = do {
         if ( my $row_count = $self->execute( @_ ) ) {
@@ -271,6 +274,7 @@ sub find {
 }
 
 sub all {
+    local $_;
     my $self = shift;
     return do {
         if ( $self->execute( @_ ) ) {
@@ -282,6 +286,7 @@ sub all {
 }
 
 sub remaining {
+    local $_;
     my ( $c, $self ) = shift->_context;
     return if $c->{ fi } || ( !$c->{ ex } && !$self->execute );
     while ( $self->_charge_buffer ) { ; }
@@ -292,6 +297,7 @@ sub remaining {
 }
 
 sub next {
+    local $_;
     my $self = shift;
     if ( @_ ) {
         if ( ref $_[ 0 ] ) {
@@ -323,15 +329,9 @@ sub done { $_[ 0 ]->c->{ fi } }
 
 sub not_done { not $_[ 0 ]->c->{ fi } }
 
-sub rows_count { $_[ 0 ]->c->{ rc } }
+sub row_count { $_[ 0 ]->c->{ rc } }
 
 sub rows_fetched { $_[ 0 ]->c->{ rf } }
-
-BEGIN {
-    *executed = *not_pending_execution;
-    *finished = *done;
-    *more     = *not_done;
-}
 
 ## use critic
 

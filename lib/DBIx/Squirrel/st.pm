@@ -20,8 +20,43 @@ use constant {
     E_UNK_PH     => 'Cannot bind unknown placeholder (%s)',
 };
 
+sub single {
+    my $itor = $_ = shift->iterate;
+    return $itor->single(@_);
+}
+
+sub find {
+    my $itor = $_ = shift->iterate;
+    return $itor->find(@_);
+}
+
+sub first {
+    my $itor = $_ = shift->iterate;
+    return $itor->first(@_);
+}
+
+sub all {
+    my $itor = $_ = shift->iterate;
+    return $itor->all(@_);
+}
+
+sub remaining {
+    my $itor = $_ = shift->iterate;
+    return $itor->remaining(@_);
+}
+
 sub iterate {
-    return DBIx::Squirrel::it->new( @_ );
+    my $sth = shift;
+    unless ( $sth->{ private_dbix_squirrel }{ itor } ) {
+        $sth->{ private_dbix_squirrel }{ itor }
+          = DBIx::Squirrel::it->new( $sth, @_ );
+    }
+    return $sth->{ private_dbix_squirrel }{ itor };
+}
+
+BEGIN {
+    *iterator = *iterate;
+    *itor     = *iterate;
 }
 
 sub execute {
