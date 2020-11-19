@@ -360,6 +360,28 @@ is_deeply \@rows, [ $exp ], 'find ok'
         SupportRepId => 3,
     },
     do {
+        $itor->sth->find;
+    }
+);
+is_deeply \@rows, [ $exp ], 'sth->find ok'
+  or print "Got:\n" . Dumper( \@rows );
+
+( $exp, @rows ) = ( {
+        Address      => "3 Chatham Street",
+        City         => "Dublin",
+        Company      => undef,
+        Country      => "Ireland",
+        CustomerId   => 46,
+        Email        => "hughoreilly\@apple.ie",
+        Fax          => undef,
+        FirstName    => "Hugh",
+        LastName     => "O'Reilly",
+        Phone        => "+353 01 6792424",
+        PostalCode   => undef,
+        State        => "Dublin",
+        SupportRepId => 3,
+    },
+    do {
         $itor->find;
     }
 );
@@ -524,6 +546,44 @@ is_deeply [ @rows[ 0, -1 ] ], $exp, 'all ok'
         },
     ],
     do {
+        $itor->sth->all;
+    }
+);
+is_deeply [ @rows[ 0, -1 ] ], $exp, 'sth->all ok'
+  or print "Got:\n" . Dumper( [ @rows[ 0, -1 ] ] );
+
+( $exp, @rows ) = ( [ {
+            Address      => "3 Chatham Street",
+            City         => "Dublin",
+            Company      => undef,
+            Country      => "Ireland",
+            CustomerId   => 46,
+            Email        => "hughoreilly\@apple.ie",
+            Fax          => undef,
+            FirstName    => "Hugh",
+            LastName     => "O'Reilly",
+            Phone        => "+353 01 6792424",
+            PostalCode   => undef,
+            State        => "Dublin",
+            SupportRepId => 3,
+        },
+        {
+            Address      => "3,Raj Bhavan Road",
+            City         => "Bangalore",
+            Company      => undef,
+            Country      => "India",
+            CustomerId   => 59,
+            Email        => "puja_srivastava\@yahoo.in",
+            Fax          => undef,
+            FirstName    => "Puja",
+            LastName     => "Srivastava",
+            Phone        => "+91 080 22289999",
+            PostalCode   => 560001,
+            State        => undef,
+            SupportRepId => 3,
+        },
+    ],
+    do {
         $itor->all;
     }
 );
@@ -602,17 +662,41 @@ is_deeply $row, $exp, 'single ok';
 like $stderr, qr/Query returned more than one row/s,
   'got expected warning (n-row buffer)';
 
-$row = do {
-    $itor->reset( {}, 1 );
-    $itor->first;
-};
-is_deeply $row, $exp, 'first ok';
+( $stderr, $row ) = (
+    capture_stderr {
+        $itor->reset( {}, 10 );
+        $itor->sth->single;
+    },
+);
+is_deeply $row, $exp, 'sth->single ok';
+like $stderr, qr/Query returned more than one row/s,
+  'got expected warning (n-row buffer)';
 
-$row = do {
-    $itor->reset( {}, 10 );
-    $itor->first;
-};
-is_deeply $row, $exp, 'first ok';
+( $row ) = (
+    do {
+        $itor->reset( {}, 1 );
+        $itor->first;
+    }
+);
+is_deeply $row, $exp, 'first ok'
+  or print "Got:\n" . Dumper( $row );
+
+( $row ) = (
+    do {
+        $itor->reset( {}, 10 );
+        $itor->first;
+    }
+);
+is_deeply $row, $exp, 'first ok'
+  or print "Got:\n" . Dumper( $row );
+
+( $row ) = (
+    do {
+        $itor->sth->first;
+    }
+);
+is_deeply $row, $exp, 'sth->first ok'
+  or print "Got:\n" . Dumper( $row );
 
 ( $exp, $row ) = ( {
         Address      => "3 Chatham Street",
@@ -659,7 +743,37 @@ is_deeply $row, $exp, 'next ok'
 is_deeply $row, $exp, 'next ok'
   or print "Got:\n" . Dumper( $row );
 
+( $exp, $row ) = ( {
+        Address      => "12,Community Centre",
+        City         => "Delhi",
+        Company      => undef,
+        Country      => "India",
+        CustomerId   => 58,
+        Email        => "manoj.pareek\@rediff.com",
+        Fax          => undef,
+        FirstName    => "Manoj",
+        LastName     => "Pareek",
+        Phone        => "+91 0124 39883988",
+        PostalCode   => 110017,
+        State        => undef,
+        SupportRepId => 3,
+    },
+    do {
+        $itor->sth->next;
+    }
+);
+is_deeply $row, $exp, 'sth->next ok'
+  or print "Got:\n" . Dumper( $row );
+$itor->reset;
+
 print $itor->_dump_state;
+
+$sth->reset;
+while ( $row = $sth->next ) {
+  diag Dumper $row;
+}
+
+
 
 $dbh->disconnect;
 
