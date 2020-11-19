@@ -48,6 +48,23 @@ $res = $sth->execute( [ v1=>'value_1', v2=>'value_2' ] );
 $res = $sth->execute( [ ':v1'=>'value_1', ':v2'=>'value_2' ] );
 $res = $sth->execute( { v1=>'value_1', v2=>'value_2' } );
 $res = $sth->execute( { ':v1'=>'value_1', ':v2'=>'value_2' } );
+
+$sth = $dbh->prepare(<< '');
+    SELECT * FROM table WHERE column_1 LIKE ?
+    
+$itor = $sth->iterate('A%');
+while ($row = $itor->next) {
+  print Dumper($row);
+}
+
+$row = $itor->find('B%');
+$row = $itor->single;
+$row = $itor->first;
+@ary = $itor->remaining;
+@ary = $itor->all;
+@ary = $itor->all('B%');
+
+$itor->reset;
 ```
 
 ## Description
