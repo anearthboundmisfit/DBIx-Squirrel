@@ -219,7 +219,6 @@ sub charge_buffer {
                     }
                 };
                 if ( $c->{ bl } >= $candidate_mr ) {
-                    print "Expanding buffer $c->{mr} to $candidate_mr\n";
                     $c->{ mr } = $candidate_mr;
                 }
             }
