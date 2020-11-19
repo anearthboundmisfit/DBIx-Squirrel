@@ -57,12 +57,12 @@ sub new {
             my $self = bless {}, $package;
             my $id   = 0+ $self;
             $itor{ $id } = {
-                it  => $self,
-                st  => $sth,
-                _id => $id,
-                bp  => [ @_ ],
-                sl  => $self->_set_slice->{ Slice },
-                mr  => $self->_set_max_rows->{ MaxRows },
+                it => $self,
+                st => $sth,
+                id => $id,
+                bp => [ @_ ],
+                sl => $self->_set_slice->{ Slice },
+                mr => $self->_set_max_rows->{ MaxRows },
             };
             $self->finish;
         } else {
