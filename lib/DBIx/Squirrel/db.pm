@@ -11,6 +11,7 @@ BEGIN {
 }
 
 use namespace::autoclean;
+use Scalar::Util 'blessed';
 use DBIx::Squirrel::st;
 
 sub prepare_cached {
@@ -38,7 +39,11 @@ sub prepare {
     my $sql = shift;
     my $sth = do {
         if ( $sql ) {
-            $dbh->DBI::db::prepare( $sql, @_ );
+            if ( blessed( $sql ) && $sql->isa( 'DBI::st' ) ) {
+                $dbh->DBI::db::prepare( $sql->{ Statement }, @_ );
+            } else {
+                $dbh->DBI::db::prepare( $sql, @_ );
+            }
         } else {
             undef;
         }
