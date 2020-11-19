@@ -26,11 +26,11 @@ our $BUF_MAX_SIZE     = 64;
 my %itor;
 
 sub _dump_state {
-    my $id = $_[ 0 ]->id;
+    my $id = $_[ 0 ]->_id;
     return Dumper( { state => $itor{ $id } } );
 }
 
-sub id {
+sub _id {
     my $self = shift;
     if ( wantarray ) {
         ref $self ? ( 0+ $self, $self ) : ();
@@ -57,12 +57,12 @@ sub new {
             my $self = bless {}, $package;
             my $id   = 0+ $self;
             $itor{ $id } = {
-                it => $self,
-                st => $sth,
-                id => $id,
-                bp => [ @_ ],
-                sl => $self->set_slice->{ Slice },
-                mr => $self->set_max_rows->{ MaxRows },
+                it  => $self,
+                st  => $sth,
+                _id => $id,
+                bp  => [ @_ ],
+                sl  => $self->_set_slice->{ Slice },
+                mr  => $self->_set_max_rows->{ MaxRows },
             };
             $self->finish;
         } else {
@@ -72,8 +72,8 @@ sub new {
     return $self;
 }
 
-sub set_slice {
-    my ( $c, $self ) = shift->context;
+sub _set_slice {
+    my ( $c, $self ) = shift->_context;
     $self->{ Slice } = do {
         if ( @_ ) {
             if ( ref $_[ 0 ] && reftype( $_[ 0 ] ) =~ m/^ARRAY|HASH$/ ) {
@@ -88,7 +88,7 @@ sub set_slice {
     return $self;
 }
 
-sub context {
+sub _context {
     my $self = $_[ 0 ];
     my $id   = 0+ $self;
     if ( wantarray ) {
@@ -98,10 +98,10 @@ sub context {
     }
 }
 
-BEGIN { *c = *context }
+BEGIN { *c = *_context }
 
-sub set_max_rows {
-    my ( $c, $self ) = shift->context;
+sub _set_max_rows {
+    my ( $c, $self ) = shift->_context;
     $self->{ MaxRows } = do {
         if ( @_ ) {
             if ( defined $_[ 0 ] && !ref $_[ 0 ] && int $_[ 0 ] > 0 ) {
@@ -117,7 +117,7 @@ sub set_max_rows {
 }
 
 sub finish {
-    my ( $c, $self ) = shift->context;
+    my ( $c, $self ) = shift->_context;
     if ( my $sth = $c->{ st } ) {
         $sth->finish if $sth->{ Active };
     }
@@ -133,13 +133,13 @@ sub finish {
 }
 
 sub first {
-    my ( $c, $self, $id ) = shift->context;
+    my ( $c, $self, $id ) = shift->_context;
     $self->reset( @_ );
     return $self->_get_row;
 }
 
 sub reset {
-    my ( $c, $self, $id ) = shift->context;
+    my ( $c, $self, $id ) = shift->_context;
     #
     # When using the "reset" method to modify the disposition and number of
     # rows fetched at a time, we allow ($slice, $max_rows), ($max_rows, $slice),
@@ -148,18 +148,18 @@ sub reset {
     #
     if ( @_ ) {
         if ( ref $_[ 0 ] ) {
-            $self->set_slice( shift );
+            $self->_set_slice( shift );
             if ( @_ ) {
-                $self->set_max_rows( shift );
+                $self->_set_max_rows( shift );
             } else {
-                $self->set_max_rows;
+                $self->_set_max_rows;
             }
         } else {
-            $self->set_max_rows( shift );
+            $self->_set_max_rows( shift );
             if ( @_ ) {
-                $self->set_slice( shift );
+                $self->_set_slice( shift );
             } else {
-                $self->set_slice;
+                $self->_set_slice;
             }
         }
     }
@@ -167,11 +167,11 @@ sub reset {
 }
 
 sub _get_row {
-    my ( $c, $self ) = shift->context;
+    my ( $c, $self ) = shift->_context;
     return if $c->{ fi } || ( !$c->{ ex } && !$self->execute );
     my $row = do {
-        $self->charge_buffer if $self->buffer_empty;
-        if ( $self->buffer_empty ) {
+        $self->_charge_buffer if $self->_buffer_empty;
+        if ( $self->_buffer_empty ) {
             $c->{ fi } = 1;
             undef;
         } else {
@@ -183,7 +183,7 @@ sub _get_row {
 }
 
 sub execute {
-    my ( $c, $self ) = shift->context;
+    my ( $c, $self ) = shift->_context;
     my $sth = $c->{ st };
     return unless $sth;
     my $res = do {
@@ -191,7 +191,7 @@ sub execute {
             $self->reset;
         }
         if ( $sth->execute( @_ ? @_ : @{ $c->{ bp } } ) ) {
-            if ( my $row_count = $self->charge_buffer ) {
+            if ( my $row_count = $self->_charge_buffer ) {
                 $c->{ ex } = 1;
                 $row_count;
             } else {
@@ -204,8 +204,8 @@ sub execute {
     return $res;
 }
 
-sub charge_buffer {
-    my ( $c, $self ) = shift->context;
+sub _charge_buffer {
+    my ( $c, $self ) = shift->_context;
     my $sth = $c->{ st };
     return unless $sth && $sth->{ Active };
     my $res = do {
@@ -240,14 +240,9 @@ sub charge_buffer {
     return $res;
 }
 
-sub buffer_empty {
-    my ( $c, $self ) = $_[ 0 ]->context;
+sub _buffer_empty {
+    my ( $c, $self ) = $_[ 0 ]->_context;
     return $c->{ bu } ? @{ $c->{ bu } } < 1 : 1;
-}
-
-sub buffer_count {
-    my ( $c, $self ) = $_[ 0 ]->context;
-    return $c->{ bu } ? scalar @{ $c->{ bu } } : 0;
 }
 
 sub single {
@@ -287,9 +282,9 @@ sub all {
 }
 
 sub remaining {
-    my ( $c, $self ) = shift->context;
+    my ( $c, $self ) = shift->_context;
     return if $c->{ fi } || ( !$c->{ ex } && !$self->execute );
-    while ( $self->charge_buffer ) { ; }
+    while ( $self->_charge_buffer ) { ; }
     my $rows = $c->{ bu };
     $c->{ rc } = $c->{ rf };
     $c->{ bu } = undef;
@@ -300,18 +295,18 @@ sub next {
     my $self = shift;
     if ( @_ ) {
         if ( ref $_[ 0 ] ) {
-            $self->set_slice( shift );
+            $self->_set_slice( shift );
             if ( @_ ) {
-                $self->set_max_rows( shift );
+                $self->_set_max_rows( shift );
             } else {
-                $self->set_max_rows;
+                $self->_set_max_rows;
             }
         } else {
-            $self->set_max_rows( shift );
+            $self->_set_max_rows( shift );
             if ( @_ ) {
-                $self->set_slice( shift );
+                $self->_set_slice( shift );
             } else {
-                $self->set_slice;
+                $self->_set_slice;
             }
         }
     }
@@ -328,9 +323,9 @@ sub done { $_[ 0 ]->c->{ fi } }
 
 sub not_done { not $_[ 0 ]->c->{ fi } }
 
-sub rows_count { $_[0]->c->{ rc } }
+sub rows_count { $_[ 0 ]->c->{ rc } }
 
-sub rows_fetched { $_[0]->c->{ rf } }
+sub rows_fetched { $_[ 0 ]->c->{ rf } }
 
 BEGIN {
     *executed = *not_pending_execution;
