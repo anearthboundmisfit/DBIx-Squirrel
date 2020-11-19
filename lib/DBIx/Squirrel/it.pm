@@ -19,7 +19,9 @@ use constant {
 };
 
 our $DEFAULT_SLICE    = [];
-our $DEFAULT_MAX_ROWS = 10;
+our $DEFAULT_MAX_ROWS = 2;
+our $BUF_MULT         = 2;
+our $BUF_MAX_SIZE     = 64;
 
 my %itor;
 
@@ -122,6 +124,9 @@ sub finish {
     $c->{ ex } = undef;
     $c->{ fi } = undef;
     $c->{ bu } = undef;
+    $c->{ bx } = $DEFAULT_MAX_ROWS;
+    $c->{ bm } = ( $BUF_MULT >= 0 && $BUF_MULT < 9 ) ? $BUF_MULT : 0;
+    $c->{ bl } = ( $BUF_MAX_SIZE > 0 ) ? $BUF_MAX_SIZE : $c->{ bx };
     $c->{ rf } = 0;
     $c->{ rc } = 0;
     return $self;
@@ -205,8 +210,20 @@ sub charge_buffer {
     return unless $sth && $sth->{ Active };
     my $res = do {
         if ( my $rows = $sth->fetchall_arrayref( $c->{ sl }, $c->{ mr } ) ) {
+            if ( $c->{ bm } ) {
+                my $candidate_mr = do {
+                    if ( $c->{ bm } > 1 ) {
+                        $c->{ bm } * $c->{ mr };
+                    } else {
+                        $c->{ bx } + $c->{ mr };
+                    }
+                };
+                if ( $c->{ bl } >= $candidate_mr ) {
+                    print "Expanding buffer $c->{mr} to $candidate_mr\n";
+                    $c->{ mr } = $candidate_mr;
+                }
+            }
             $c->{ bu } = do {
-                $c->{ ex } = 1 unless $c->{ ex };
                 if ( $c->{ bu } ) {
                     [ @{ $c->{ bu } }, @{ $rows } ];
                 } else {
