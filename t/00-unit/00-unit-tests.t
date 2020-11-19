@@ -248,7 +248,7 @@ $itor->reset;
 is_deeply $itor->{ Slice }, { foo => 2 }, 'slice ok';
 is $itor->{ MaxRows }, 20, 'max rows ok';
 
-$itor->set_slice->set_max_rows;
+$itor->_set_slice->_set_max_rows;
 is $itor->{ Slice }, $DBIx::Squirrel::it::DEFAULT_SLICE,
   'slice ok';
 is $itor->{ MaxRows }, $DBIx::Squirrel::it::DEFAULT_MAX_ROWS,
