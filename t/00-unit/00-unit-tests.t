@@ -254,7 +254,7 @@ is $itor->{ Slice }, $DBIx::Squirrel::it::DEFAULT_SLICE,
 is $itor->{ MaxRows }, $DBIx::Squirrel::it::DEFAULT_MAX_ROWS,
   'max rows ok';
 
-$itor->reset( {}, 10 );
+$itor->reset( {}, 1 );
 
 ( $exp, $row ) = ( {
         Address      => "3 Chatham Street",
@@ -615,6 +615,29 @@ $row = do {
 is_deeply $row, $exp, 'first ok';
 
 ( $exp, $row ) = ( {
+        Address      => "3 Chatham Street",
+        City         => "Dublin",
+        Company      => undef,
+        Country      => "Ireland",
+        CustomerId   => 46,
+        Email        => "hughoreilly\@apple.ie",
+        Fax          => undef,
+        FirstName    => "Hugh",
+        LastName     => "O'Reilly",
+        Phone        => "+353 01 6792424",
+        PostalCode   => undef,
+        State        => "Dublin",
+        SupportRepId => 3,
+    },
+    do {
+        $itor->reset( {}, 1 );
+        $itor->next;
+    }
+);
+is_deeply $row, $exp, 'next ok'
+  or print "Got:\n" . Dumper( $row );
+
+( $exp, $row ) = ( {
         Address      => "Via Degli Scipioni, 43",
         City         => "Rome",
         Company      => undef,
@@ -635,6 +658,8 @@ is_deeply $row, $exp, 'first ok';
 );
 is_deeply $row, $exp, 'next ok'
   or print "Got:\n" . Dumper( $row );
+
+print $itor->_dump_state;
 
 $dbh->disconnect;
 
