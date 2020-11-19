@@ -20,45 +20,6 @@ use constant {
     E_UNK_PH     => 'Cannot bind unknown placeholder (%s)',
 };
 
-sub single {
-    my $itor = $_ = shift->iterate;
-    return $itor->single(@_);
-}
-
-sub find {
-    my $itor = $_ = shift->iterate;
-    return $itor->find(@_);
-}
-
-sub first {
-    my $itor = $_ = shift->iterate;
-    return $itor->first(@_);
-}
-
-sub all {
-    my $itor = $_ = shift->iterate;
-    return $itor->all(@_);
-}
-
-sub remaining {
-    my $itor = $_ = shift->iterate;
-    return $itor->remaining(@_);
-}
-
-sub iterate {
-    my $sth = shift;
-    unless ( $sth->{ private_dbix_squirrel }{ itor } ) {
-        $sth->{ private_dbix_squirrel }{ itor }
-          = DBIx::Squirrel::it->new( $sth, @_ );
-    }
-    return $sth->{ private_dbix_squirrel }{ itor };
-}
-
-BEGIN {
-    *iterator = *iterate;
-    *itor     = *iterate;
-}
-
 sub execute {
     my $sth = shift;
     if ( @_ ) {
@@ -162,6 +123,49 @@ sub bind_param {
     };
     return $result;
 }
+
+sub reset {
+    my $itor = $_ = shift->iterate;
+    return $itor->reset( @_ );
+}
+
+sub single {
+    my $itor = $_ = shift->iterate;
+    return $itor->single(@_);
+}
+
+sub find {
+    my $itor = $_ = shift->iterate;
+    return $itor->find(@_);
+}
+
+sub first {
+    my $itor = $_ = shift->iterate;
+    return $itor->first(@_);
+}
+
+sub all {
+    my $itor = $_ = shift->iterate;
+    return $itor->all(@_);
+}
+
+sub remaining {
+    my $itor = $_ = shift->iterate;
+    return $itor->remaining(@_);
+}
+
+sub iterate {
+    my $sth     = shift;
+    my $private = $sth->{ private_dbix_squirrel };
+    my $itor    = $sth->iterator or do {
+        $private->{ itor } = DBIx::Squirrel::it->new( $sth, @_ );
+    };
+    return $private->{ itor };
+}
+
+sub iterator { $_[ 0 ]->{ private_dbix_squirrel }{ itor } }
+
+BEGIN { *itor = *iterator }
 
 ## use critic
 
