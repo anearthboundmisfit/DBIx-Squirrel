@@ -44,7 +44,7 @@ sub DESTROY {
     local ( $., $@, $!, $^E, $?, $_ );
     my $self = $_[ 0 ];
     my $id   = 0+ $_[ 0 ];
-    $self->finish;
+    $self->_finish;
     delete $itor{ $id };
     return;
 }
@@ -57,14 +57,14 @@ sub new {
             my $self = bless {}, $package;
             my $id   = 0+ $self;
             $itor{ $id } = {
-                it => $self,
                 st => $sth,
                 id => $id,
                 bp => [ @_ ],
                 sl => $self->_set_slice->{ Slice },
                 mr => $self->_set_max_rows->{ MaxRows },
             };
-            $self->finish;
+            $sth->{ private_dbix_squirrel }{ itor } = $self;
+            $self->_finish;
         } else {
             undef;
         }
@@ -116,7 +116,7 @@ sub _set_max_rows {
     return $self;
 }
 
-sub finish {
+sub _finish {
     my ( $c, $self ) = shift->_context;
     if ( my $sth = $c->{ st } ) {
         $sth->finish if $sth->{ Active };
@@ -140,6 +140,7 @@ sub first {
 }
 
 sub reset {
+    local $_;
     my ( $c, $self, $id ) = shift->_context;
     #
     # When using the "reset" method to modify the disposition and number of
@@ -164,7 +165,7 @@ sub reset {
             }
         }
     }
-    return $self->finish;
+    return $self->_finish;
 }
 
 sub _get_row {
