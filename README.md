@@ -107,10 +107,9 @@ of the box (offering comfortable familiarity), and offers a slate of graceful en
 **Highlights**
 
 - Connect to database handles — pass a database connection handle to the
-**`connect`** method to clone it. Database connections opened using standard
+`connect` method to clone it. Database connections opened using standard
 DBI may also be cloned and enriched.
 - Built-in support for *`?`*, *`?1`*, *`$1`*, *`:1`*, and *`:name`* parameter
 placeholder styles, regardless of driver.
 - Hassle-free binding of parameter values to placeholders. 
-- Looks and feels like DBI when you need it to but there are also easier ways
-to do things.
+- Looks and feels like DBI when you need it to, while offering less labour-intensive ways to do things.
