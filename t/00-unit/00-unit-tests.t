@@ -766,14 +766,10 @@ is_deeply $row, $exp, 'sth->next ok'
   or print "Got:\n" . Dumper( $row );
 $itor->reset;
 
-print $itor->_dump_state;
-
-$sth->reset;
+$sth = $dbh->prepare( 'SELECT * FROM customers' );
 while ( $row = $sth->next ) {
-  diag Dumper $row;
+  print Dumper($row);
 }
-
-
 
 $dbh->disconnect;
 

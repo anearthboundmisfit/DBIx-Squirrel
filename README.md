@@ -59,7 +59,7 @@ $sth = $dbh->prepare(<< ';;');
     SELECT * FROM table WHERE column_1 = :v1 AND column_2 = :v2
 ;;
 
-# With sensible, simple value-binding schemes
+# Sensible and simple value-binding
 $res = $sth->execute( v1=>'value_1', v2=>'value_2' );
 $res = $sth->execute( ':v1'=>'value_1', ':v2'=>'value_2' );
 $res = $sth->execute([ v1=>'value_1', v2=>'value_2' ]);
@@ -67,10 +67,8 @@ $res = $sth->execute([ ':v1'=>'value_1', ':v2'=>'value_2' ]);
 $res = $sth->execute({ v1=>'value_1', v2=>'value_2' });
 $res = $sth->execute({ ':v1'=>'value_1', ':v2'=>'value_2' });
 
-# Effortless iterators
-$sth = $dbh->prepare(<< ';;');
-    SELECT * FROM table WHERE column_1 LIKE ?
-;;
+# Effortless iterators (no execute required here)
+$sth = $dbh->prepare( 'SELECT * FROM table' );
 while ( $row = $sth->next ) {
   print Dumper($row);
 }
