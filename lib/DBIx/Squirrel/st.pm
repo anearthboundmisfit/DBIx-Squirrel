@@ -75,14 +75,11 @@ sub bind {
 }
 
 sub _format_params {
-    my @params = do {
-        if ( my %order = _order_of_placeholders_if_positional( shift ) ) {
-            map { ( $order{ $_ } => $_[ $_ - 1 ] ) } keys %order;
-        } else {
-            @_;
-        }
-    };
-    return @params;
+    if ( my %order = _order_of_placeholders_if_positional( shift ) ) {
+        map { ( $order{ $_ } => $_[ $_ - 1 ] ) } keys %order;
+    } else {
+        @_;
+    }
 }
 
 sub _order_of_placeholders_if_positional {
@@ -124,6 +121,12 @@ sub bind_param {
     return $result;
 }
 
+sub prepare {
+    my $sth = shift;
+    my $dbh = $sth->{ Database };
+    return $dbh->prepare( $sth->{ Statement } );
+}
+
 sub iterate {
     my $sth     = shift;
     my $private = $sth->{ private_dbix_squirrel };
@@ -134,45 +137,46 @@ sub iterate {
 }
 
 sub reset {
-    my $itor = $_ = shift->iterate;
-    return $itor->reset( @_ );
+    shift->iterate->reset( @_ );
 }
 
 sub single {
-    my $itor = $_ = shift->iterate;
-    return $itor->single(@_);
+    shift->iterate->single( @_ );
 }
 
 sub find {
-    my $itor = $_ = shift->iterate;
-    return $itor->find(@_);
+    shift->iterate->find( @_ );
 }
 
 sub first {
-    my $itor = $_ = shift->iterate;
-    return $itor->first(@_);
+    shift->iterate->first( @_ );
 }
 
 sub all {
-    my $itor = $_ = shift->iterate;
-    return $itor->all(@_);
+    shift->iterate->all( @_ );
 }
 
 sub remaining {
-    my $itor = $_ = shift->iterate;
-    return $itor->remaining(@_);
+    shift->iterate->remaining( @_ );
 }
 
 sub next {
-    my $itor = $_ = shift->iterate;
-    return $itor->next(@_);
+    shift->iterate->next( @_ );
 }
 
-sub iterator { $_[ 0 ]->{ private_dbix_squirrel }{ itor } }
+sub reiterate {
+    shift->prepare->iterate( @_ );
+}
+
+sub iterator {
+    shift->{ private_dbix_squirrel }{ itor };
+}
 
 BEGIN {
-    *it   = *iterate;
-    *itor = *iterator;
+    *it    = *iterate;
+    *itor  = *iterator;
+    *reit  = *reiterate;
+    *clone = *prepare;
 }
 
 ## use critic
