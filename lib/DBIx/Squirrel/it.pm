@@ -301,6 +301,7 @@ sub remaining {
     my $rows = $c->{ bu };
     $c->{ rc } = $c->{ rf };
     $c->{ bu } = undef;
+    $self->reset;
     return wantarray ? @{ $rows } : $rows;
 }
 
