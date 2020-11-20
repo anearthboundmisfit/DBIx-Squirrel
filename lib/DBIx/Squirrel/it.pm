@@ -258,6 +258,9 @@ sub single {
             undef;
         }
     };
+    # Single binds possibly override constructor binds, so be sure to 
+    # reset or things get unpredicable
+    $self->reset;
     return $res;
 }
 
@@ -271,6 +274,9 @@ sub find {
             undef;
         }
     };
+    # Find binds possibly override constructor binds, so be sure to 
+    # reset or things get unpredicable
+    $self->reset;
     return $res;
 }
 
