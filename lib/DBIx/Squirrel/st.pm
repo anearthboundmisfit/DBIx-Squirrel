@@ -133,8 +133,6 @@ sub iterate {
     return $private->{ itor };
 }
 
-sub iterator { $_[ 0 ]->{ private_dbix_squirrel }{ itor } }
-
 sub reset {
     my $itor = $_ = shift->iterate;
     return $itor->reset( @_ );
@@ -170,7 +168,12 @@ sub next {
     return $itor->next(@_);
 }
 
-BEGIN { *itor = *iterator }
+sub iterator { $_[ 0 ]->{ private_dbix_squirrel }{ itor } }
+
+BEGIN {
+    *it   = *iterate;
+    *itor = *iterator;
+}
 
 ## use critic
 
