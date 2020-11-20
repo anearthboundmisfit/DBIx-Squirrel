@@ -124,7 +124,7 @@ sub bind_param {
 sub prepare {
     my $sth = shift;
     my $dbh = $sth->{ Database };
-    return $dbh->prepare( $sth->{ Statement } );
+    return $dbh->prepare( $sth->{ Statement }, @_ );
 }
 
 sub iterate {
@@ -137,7 +137,7 @@ sub iterate {
 }
 
 sub reset {
-    shift->iterate->reset( @_ );
+    shift->iterate->reset( @_ )->sth;
 }
 
 sub single {

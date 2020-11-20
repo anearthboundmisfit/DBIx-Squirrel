@@ -258,6 +258,9 @@ sub single {
             undef;
         }
     };
+    # Single binds possibly override constructor binds, so be sure to
+    # reset or things get unpredicable
+    $self->reset;
     return $res;
 }
 
@@ -277,13 +280,17 @@ sub find {
 sub all {
     local ( $_ );
     my $self = shift;
-    return do {
+    my $res  = do {
         if ( $self->execute( @_ ) ) {
             $self->remaining;
         } else {
-            wantarray ? () : undef;
+            [];
         }
     };
+    # Find binds possibly override constructor binds, so be sure to
+    # reset or things get unpredicable
+    $self->reset;
+    return wantarray ? @{ $res } : $res;
 }
 
 sub remaining {
@@ -294,6 +301,7 @@ sub remaining {
     my $rows = $c->{ bu };
     $c->{ rc } = $c->{ rf };
     $c->{ bu } = undef;
+    $self->reset;
     return wantarray ? @{ $rows } : $rows;
 }
 
@@ -355,7 +363,7 @@ sub rows_fetched {
 BEGIN {
     *reit    = *reiterate;
     *iterate = *reiterate;
-    *it      = $reiterate;
+    *it      = *reiterate;
 }
 
 ## use critic
