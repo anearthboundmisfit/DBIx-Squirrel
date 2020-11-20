@@ -14,26 +14,6 @@ use namespace::autoclean;
 use Scalar::Util 'blessed';
 use DBIx::Squirrel::st;
 
-sub prepare_cached {
-    my $dbh = shift;
-    my $sql = shift;
-    my $sth = do {
-        if ( $sql ) {
-            $dbh->DBI::db::prepare_cached( $sql, @_ );
-        } else {
-            undef;
-        }
-    };
-    if ( $sth ) {
-        $sth->{ private_dbix_squirrel } = {
-            params    => _get_param_order( $sql ),
-            cache_key => join( '#', ( caller 0 )[ 1, 2 ] ),
-        };
-        bless $sth, 'DBIx::Squirrel::st';
-    }
-    return $sth;
-}
-
 sub prepare {
     my $dbh = shift;
     my $sql = shift;
@@ -72,6 +52,38 @@ sub _get_param_order {
         %order ? \%order : undef;
     };
     return $order;
+}
+
+sub prepare_cached {
+    my $dbh = shift;
+    my $sql = shift;
+    my $sth = do {
+        if ( $sql ) {
+            $dbh->DBI::db::prepare_cached( $sql, @_ );
+        } else {
+            undef;
+        }
+    };
+    if ( $sth ) {
+        $sth->{ private_dbix_squirrel } = {
+            params    => _get_param_order( $sql ),
+            cache_key => join( '#', ( caller 0 )[ 1, 2 ] ),
+        };
+        bless $sth, 'DBIx::Squirrel::st';
+    }
+    return $sth;
+}
+
+sub do {
+    shift->prepare( shift )->execute( @_ );
+}
+
+sub iterate {
+    shift->prepare( shift )->iterate( @_ );
+}
+
+BEGIN {
+    *it = *iterate;
 }
 
 ## use critic
