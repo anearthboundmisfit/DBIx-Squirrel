@@ -50,6 +50,7 @@ sub DESTROY {
 }
 
 sub new {
+    local ( $_ );
     my $self = do {
         my $package = ref $_[ 0 ] ? ref shift : shift;
         my $sth     = shift;
@@ -98,8 +99,6 @@ sub _context {
     }
 }
 
-BEGIN { *c = *_context }
-
 sub _set_max_rows {
     my ( $c, $self ) = shift->_context;
     $self->{ MaxRows } = do {
@@ -133,14 +132,14 @@ sub _finish {
 }
 
 sub first {
-    local $_;
+    local ( $_ );
     my ( $c, $self, $id ) = shift->_context;
     $self->reset( @_ );
     return $self->_get_row;
 }
 
 sub reset {
-    local $_;
+    local ( $_ );
     my ( $c, $self, $id ) = shift->_context;
     #
     # When using the "reset" method to modify the disposition and number of
@@ -185,6 +184,7 @@ sub _get_row {
 }
 
 sub execute {
+    local ( $_ );
     my ( $c, $self ) = shift->_context;
     my $sth = $c->{ st };
     return unless $sth;
@@ -248,7 +248,7 @@ sub _buffer_empty {
 }
 
 sub single {
-    local $_;
+    local ( $_ );
     my $self = shift;
     my $res  = do {
         if ( my $row_count = $self->execute( @_ ) ) {
@@ -262,7 +262,7 @@ sub single {
 }
 
 sub find {
-    local $_;
+    local ( $_ );
     my $self = shift;
     my $res  = do {
         if ( my $row_count = $self->execute( @_ ) ) {
@@ -275,7 +275,7 @@ sub find {
 }
 
 sub all {
-    local $_;
+    local ( $_ );
     my $self = shift;
     return do {
         if ( $self->execute( @_ ) ) {
@@ -287,7 +287,7 @@ sub all {
 }
 
 sub remaining {
-    local $_;
+    local ( $_ );
     my ( $c, $self ) = shift->_context;
     return if $c->{ fi } || ( !$c->{ ex } && !$self->execute );
     while ( $self->_charge_buffer ) { ; }
@@ -298,7 +298,7 @@ sub remaining {
 }
 
 sub next {
-    local $_;
+    local ( $_ );
     my $self = shift;
     if ( @_ ) {
         if ( ref $_[ 0 ] ) {
@@ -320,19 +320,43 @@ sub next {
     return $self->_get_row;
 }
 
-sub sth { $_[ 0 ]->c->{ st } }
+sub reiterate {
+    shift->sth->reiterate( @_ );
+}
 
-sub pending_execution { $_[ 0 ]->c->{ ex } }
+sub sth {
+    shift->_context->{ st };
+}
 
-sub not_pending_execution { not $_[ 0 ]->c->{ ex } }
+sub pending_execution {
+    shift->_context->{ ex };
+}
 
-sub done { $_[ 0 ]->c->{ fi } }
+sub not_pending_execution {
+    not shift->_context->{ ex };
+}
 
-sub not_done { not $_[ 0 ]->c->{ fi } }
+sub done {
+    shift->_context->{ fi };
+}
 
-sub row_count { $_[ 0 ]->c->{ rc } }
+sub not_done {
+    not shift->_context->{ fi };
+}
 
-sub rows_fetched { $_[ 0 ]->c->{ rf } }
+sub row_count {
+    shift->_context->{ rc };
+}
+
+sub rows_fetched {
+    shift->_context->{ rf };
+}
+
+BEGIN {
+    *reit    = *reiterate;
+    *iterate = *reiterate;
+    *it      = $reiterate;
+}
 
 ## use critic
 
