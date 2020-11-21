@@ -5,7 +5,7 @@ BEGIN {
 
 use autobox::Core;
 use Test::Most;
-use Capture::Tiny 'capture_stdout', 'capture_stderr';
+use Capture::Tiny 'capture_stdout', 'capture_stderr', 'capture';
 use Cwd 'realpath';
 use DBIx::Squirrel::util ':all';
 use DBIx::Squirrel;
@@ -35,15 +35,15 @@ ok 1, __FILE__ . ' complete';
 done_testing;
 
 sub test_clone_connection {
-    my ($master, $description) = @{+shift};
+    my ( $master, $description ) = @{ +shift };
 
     diag "";
     diag "Test connection cloned from a $description";
     diag "";
 
-    my $clone  = DBIx::Squirrel->connect( $master );
+    my $clone = DBIx::Squirrel->connect( $master );
     isa_ok $clone, 'DBIx::Squirrel::db';
-    test_prepare_execute_fetch_cycle($clone);
+    test_prepare_execute_fetch_cycle( $clone );
 
     $clone->disconnect;
     $master->disconnect;
@@ -51,16 +51,59 @@ sub test_clone_connection {
 }
 
 sub test_prepare_execute_fetch_cycle {
-    my $dbh = shift;
+    my ( $dbh ) = @_;
+    my ( $sql, $sth, $res );
 
     diag "";
     diag "Test prepare-execute-fetch cycle";
     diag "";
 
-    my $sql = << '';
-        SELECT * FROM media_types ORDER BY MediaTypeId
+    $sql = << '';
+    SELECT *
+    FROM media_types
+    WHERE MediaTypeId > ?
+    ORDER BY MediaTypeId
 
-    my $sth = $dbh->prepare($sql);
-    
+    $sth = $dbh->prepare( $sql );
+    $res = $sth->execute( 0 );
+
+    diag dump_results( $sth, $res );
+    diag "";
+
     return;
+}
+
+sub dump_results {
+    my ( $sth ) = @_;
+    my ( $summary, @rows ) = do {
+        my @res = split /\n/, capture_stdout { $sth->dump_results };
+        ( pop @res, @res );
+    };
+    return join "\n", (
+        'Statement',
+        '---------',
+        $sth->{ Statement }, '',
+        do {
+            if ( %{ $sth->{ ParamValues } } ) {
+                (
+                    'Parameters',
+                    '----------',
+                    Dumper( $sth->{ ParamValues } ),
+                );
+            } else {
+                ();
+            }
+        },
+        do {
+            if ( @rows ) {
+                (
+                    'Result (' . $summary . ')',
+                    '--------' . ( '-' x ( 1 + length( $summary ) ) ),
+                    @rows,
+                );
+            } else {
+                ();
+            }
+        },
+    );
 }
