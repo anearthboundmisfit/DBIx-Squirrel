@@ -12,7 +12,7 @@ BEGIN {
 
 use namespace::autoclean;
 use DBIx::Squirrel::it;
-use DBIx::Squirrel::util 'throw';
+use DBIx::Squirrel::util 'throw', 'whine';
 use Scalar::Util 'reftype';
 
 use constant {
@@ -37,13 +37,19 @@ sub bind {
         my $order = $sth->{ private_dbix_squirrel }{ params };
         if ( $order || ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) ) {
             my %kv = do {
-                if ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) {
-                    %{ +shift };
-                } elsif ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'ARRAY' ) {
-                    _format_params( $order, @{ +shift } );
-                } else {
-                    _format_params( $order, @_ );
+                my @params = do {
+                    if ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) {
+                        %{ +shift };
+                    } elsif ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'ARRAY' ) {
+                        _format_params( $order, @{ +shift } );
+                    } else {
+                        _format_params( $order, @_ );
+                    }
+                };
+                if (@params % 2) {
+                    whine 'Check bind values are appropriate for placeholders';
                 }
+                @params;
             };
             while ( my ( $k, $v ) = each %kv ) {
                 if ( $k ) {
