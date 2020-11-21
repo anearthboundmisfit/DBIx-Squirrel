@@ -43,23 +43,25 @@ sub test_clone_connection {
 
     my $clone = DBIx::Squirrel->connect( $master );
     isa_ok $clone, 'DBIx::Squirrel::db';
-    test_prepare_execute_fetch( $clone );
+
+    diag "";
+    diag "Test prepare-execute-fetch cycle";
+    diag "";
+    test_prepare_execute_fetch_single_row( $clone );
+    test_prepare_execute_fetch_multiple_rows( $clone );
 
     $clone->disconnect;
     $master->disconnect;
     return;
 }
 
-sub test_prepare_execute_fetch {
+sub test_prepare_execute_fetch_single_row {
     my ( $dbh ) = @_;
     my (
         $sql, $sth, $res, $got, @got, $exp, @exp, $row, $stdout, $stderr,
         @hashrefs, @arrayrefs
     );
 
-    diag "";
-    diag "Test prepare-execute-fetch cycle";
-    diag "";
     diag "Result contains a single row";
     diag "";
 
@@ -96,6 +98,16 @@ sub test_prepare_execute_fetch {
     );
     is_deeply $exp, $got, 'single';
     is $stderr, '', 'got no warning when result contains single row';
+
+    return;
+}
+
+sub test_prepare_execute_fetch_multiple_rows {
+    my ( $dbh ) = @_;
+    my (
+        $sql, $sth, $res, $got, @got, $exp, @exp, $row, $stdout, $stderr,
+        @hashrefs, @arrayrefs
+    );
 
     diag "";
     diag "Result contains multiple rows";
