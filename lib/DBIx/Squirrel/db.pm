@@ -11,7 +11,8 @@ BEGIN {
 }
 
 use namespace::autoclean;
-use Scalar::Util 'blessed';
+use Scalar::Util 'blessed', 'reftype';
+use DBIx::Squirrel::util 'throw';
 use DBIx::Squirrel::st;
 
 sub prepare {
@@ -75,11 +76,36 @@ sub prepare_cached {
 }
 
 sub do {
-    shift->prepare( shift )->execute( @_ );
+    my $dbh       = shift;
+    my $statement = shift;
+    my $res       = do {
+        if ( @_ ) {
+            if ( ref $_[ 0 ] ) {
+                if ( reftype( $_[ 0 ] ) eq 'HASH' ) {
+                    $dbh->prepare( $statement, shift )->execute( @_ );
+                } elsif ( reftype( $_[ 0 ] ) eq 'ARRAY' ) {
+                    $dbh->prepare( $statement )->execute( @_ );
+                } else {
+                    throw 'Expected a reference to a HASH or ARRAY';
+                }
+            } else {
+                if ( defined $_[ 0 ] ) {
+                    $dbh->prepare( $statement )->execute( @_ );
+                } else {
+                    $dbh->prepare( $statement, shift )->execute( @_ );
+                }
+            }
+        } else {
+            $dbh->prepare( $statement )->execute;
+        }
+    };
+    return $res;
 }
 
 sub iterate {
-    shift->prepare( shift )->iterate( @_ );
+    my $dbh       = shift;
+    my $statement = shift;
+    return $dbh->prepare( $statement )->iterate( @_ );
 }
 
 BEGIN {
