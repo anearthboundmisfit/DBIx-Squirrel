@@ -17,21 +17,42 @@ use DBIx::Squirrel::st;
 
 sub prepare {
     my $dbh = shift;
-    my $sql = shift;
-    my $sth = do {
-        if ( $sql ) {
-            if ( blessed( $sql ) && $sql->isa( 'DBI::st' ) ) {
-                $dbh->DBI::db::prepare( $sql->{ Statement }, @_ );
+    my ( $params, $std, $sql ) = do {
+        my $statement = do {
+            if ( blessed( $_[ 0 ] ) ) {
+                if ( $_[ 0 ]->isa( 'DBI::st' ) ) {
+                    shift->{ Statement };
+                } elsif ( $_[ 0 ]->isa( 'DBIx::Squirrel::st' ) ) {
+                    shift->{ private_dbix_squirrel }{ sql };
+                } else {
+                    throw 'Expected a statement handle';
+                }
             } else {
-                $dbh->DBI::db::prepare( $sql, @_ );
+                shift;
             }
+        };
+        if ( defined $statement ) {
+            $statement =~ s{\s+\Z}{}s;
+            $statement =~ s{\A\s+}{}s;
+        }
+        if ( length $statement ) {
+            ( _get_param_order( $statement ), $statement );
         } else {
-            undef;
+            throw 'Expected a statement';
+        }
+    };
+    my $sth = do {
+        if ( $DBIx::Squirrel::NORMALISED_STATEMENTS ) {
+            $dbh->DBI::db::prepare( $std, @_ );
+        } else {
+            $dbh->DBI::db::prepare( $sql, @_ );
         }
     };
     if ( $sth ) {
         $sth->{ private_dbix_squirrel } = {
-            params => _get_param_order( $sql ),
+            sql    => $sql,
+            std    => $std,
+            params => $params,
         };
         bless $sth, 'DBIx::Squirrel::st';
     }
@@ -39,11 +60,14 @@ sub prepare {
 }
 
 sub _get_param_order {
+    my $sql   = shift;
     my $order = do {
         my %order;
-        if ( my $sql = shift ) {
+        if ( $sql ) {
             my @params = $sql =~ m{[\:\$\?]\w+\b}g;
             if ( my $count = @params ) {
+                $sql =~ s{\s+\Z}{}s;
+                $sql =~ s{\A\s+}{}s;
                 $sql =~ s{[\:\$\?]\w+\b}{?}g;
                 for ( my $p = 0 ; $p < $count ; $p += 1 ) {
                     $order{ 1 + $p } = $params[ $p ];
@@ -52,23 +76,48 @@ sub _get_param_order {
         }
         %order ? \%order : undef;
     };
-    return $order;
+    return wantarray ? ( $order, $sql ) : $order;
 }
 
 sub prepare_cached {
     my $dbh = shift;
-    my $sql = shift;
-    my $sth = do {
-        if ( $sql ) {
-            $dbh->DBI::db::prepare_cached( $sql, @_ );
+    my ( $params, $std, $sql ) = do {
+        my $statement = do {
+            if ( blessed( $_[ 0 ] ) ) {
+                if ( $_[ 0 ]->isa( 'DBI::st' ) ) {
+                    shift->{ Statement };
+                } elsif ( $_[ 0 ]->isa( 'DBIx::Squirrel::st' ) ) {
+                    shift->{ private_dbix_squirrel }{ sql };
+                } else {
+                    throw 'Expected a statement handle';
+                }
+            } else {
+                shift;
+            }
+        };
+        if ( defined $statement ) {
+            $statement =~ s{\s+\Z}{}s;
+            $statement =~ s{\A\s+}{}s;
+        }
+        if ( length $statement ) {
+            ( _get_param_order( $statement ), $statement );
         } else {
-            undef;
+            throw 'Expected a statement';
+        }
+    };
+    my $sth = do {
+        if ( $DBIx::Squirrel::NORMALISED_STATEMENTS ) {
+            $dbh->DBI::db::prepare_cached( $std, @_ );
+        } else {
+            $dbh->DBI::db::prepare_cached( $sql, @_ );
         }
     };
     if ( $sth ) {
         $sth->{ private_dbix_squirrel } = {
-            params    => _get_param_order( $sql ),
             cache_key => join( '#', ( caller 0 )[ 1, 2 ] ),
+            sql       => $sql,
+            std       => $std,
+            params    => $params,
         };
         bless $sth, 'DBIx::Squirrel::st';
     }
