@@ -17,30 +17,7 @@ use DBIx::Squirrel::st;
 
 sub prepare {
     my $dbh = shift;
-    my ( $params, $std, $sql ) = do {
-        my $statement = do {
-            if ( blessed( $_[ 0 ] ) ) {
-                if ( $_[ 0 ]->isa( 'DBI::st' ) ) {
-                    shift->{ Statement };
-                } elsif ( $_[ 0 ]->isa( 'DBIx::Squirrel::st' ) ) {
-                    shift->{ private_dbix_squirrel }{ sql };
-                } else {
-                    throw 'Expected a statement handle';
-                }
-            } else {
-                shift;
-            }
-        };
-        if ( defined $statement ) {
-            $statement =~ s{\s+\Z}{}s;
-            $statement =~ s{\A\s+}{}s;
-        }
-        if ( length $statement ) {
-            ( _get_param_order( $statement ), $statement );
-        } else {
-            throw 'Expected a statement';
-        }
-    };
+    my ( $params, $std, $sql ) = _common_prepare_work( shift );
     my $sth = do {
         if ( $DBIx::Squirrel::NORMALISED_STATEMENTS ) {
             $dbh->DBI::db::prepare( $std, @_ );
@@ -57,6 +34,30 @@ sub prepare {
         bless $sth, 'DBIx::Squirrel::st';
     }
     return $sth;
+}
+
+sub _common_prepare_work {
+    my $statement = do {
+        if ( blessed( $_[ 0 ] ) ) {
+            if ( $_[ 0 ]->isa( 'DBI::st' ) ) {
+                shift->{ Statement };
+            } elsif ( $_[ 0 ]->isa( 'DBIx::Squirrel::st' ) ) {
+                shift->{ private_dbix_squirrel }{ sql };
+            } else {
+                throw 'Expected a statement handle';
+            }
+        } else {
+            shift;
+        }
+    };
+    if ( defined $statement ) {
+        $statement =~ s{\s+\Z}{}s;
+        $statement =~ s{\A\s+}{}s;
+    }
+    unless ( length $statement ) {
+        throw 'Expected a statement';
+    }
+    return ( _get_param_order( $statement ), $statement );
 }
 
 sub _get_param_order {
@@ -81,30 +82,7 @@ sub _get_param_order {
 
 sub prepare_cached {
     my $dbh = shift;
-    my ( $params, $std, $sql ) = do {
-        my $statement = do {
-            if ( blessed( $_[ 0 ] ) ) {
-                if ( $_[ 0 ]->isa( 'DBI::st' ) ) {
-                    shift->{ Statement };
-                } elsif ( $_[ 0 ]->isa( 'DBIx::Squirrel::st' ) ) {
-                    shift->{ private_dbix_squirrel }{ sql };
-                } else {
-                    throw 'Expected a statement handle';
-                }
-            } else {
-                shift;
-            }
-        };
-        if ( defined $statement ) {
-            $statement =~ s{\s+\Z}{}s;
-            $statement =~ s{\A\s+}{}s;
-        }
-        if ( length $statement ) {
-            ( _get_param_order( $statement ), $statement );
-        } else {
-            throw 'Expected a statement';
-        }
-    };
+    my ( $params, $std, $sql ) = _common_prepare_work( shift );
     my $sth = do {
         if ( $DBIx::Squirrel::NORMALISED_STATEMENTS ) {
             $dbh->DBI::db::prepare_cached( $std, @_ );
