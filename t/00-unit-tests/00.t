@@ -16,8 +16,8 @@ use T::Database ':all';
 $| = 1;
 
 our (
-    $sql, $sth, $res, $got, @got, $exp, @exp, $row, $stdout, $stderr,
-    @hashrefs, @arrayrefs, $standard_dbi_dbh, $standard_ekorn_dbh,
+    $sql, $sth, $res, $got, @got, $exp, @exp, $row, $dbh, $sth, $stdout,
+    $stderr, @hashrefs, @arrayrefs, $standard_dbi_dbh, $standard_ekorn_dbh,
     $cached_ekorn_dbh,
 );
 
@@ -59,37 +59,6 @@ sub test_the_basics {
     throws_ok { throw 'An error' } ( qr/An error at/, 'throw' );
     throws_ok { throw '%s error', 'Another' } ( qr/Another error at/, 'throw' );
 
-    ( $exp, $got ) = ( [
-            undef,
-            "SELECT * FROM table WHERE col = ?",
-        ],
-        do {
-            [
-                DBIx::Squirrel::db::_get_param_order(
-                    '   SELECT * FROM table WHERE col = ?   '
-                )
-            ];
-        },
-    );
-    is_deeply $exp, $got, '_get_param_order'
-      or dump_val { exp => $exp, got => $got };
-
-    ( $exp, $got ) = ( [ {
-                1 => "\$1",
-            },
-            "SELECT * FROM table WHERE col = ?",
-        ],
-        do {
-            [
-                DBIx::Squirrel::db::_get_param_order(
-                    '   SELECT * FROM table WHERE col = $1   '
-                )
-            ];
-        },
-    );
-    is_deeply $exp, $got, '_get_param_order'
-      or dump_val { exp => $exp, got => $got };
-
     $standard_dbi_dbh = DBI->connect( @T_DB_CONNECT_ARGS );
     ok DBIx::Squirrel::dr::_is_db_handle( $standard_dbi_dbh ),
       '_is_db_handle';
@@ -107,6 +76,299 @@ sub test_the_basics {
     );
     isa_ok $standard_ekorn_dbh, 'DBIx::Squirrel::db';
     isa_ok $cached_ekorn_dbh,   'DBIx::Squirrel::db';
+
+    ( $exp, $got ) = ( [
+            undef,
+            'SELECT * FROM table WHERE col = ?',
+        ],
+        do {
+            [
+                DBIx::Squirrel::db::_get_param_order(
+                    ' SELECT * FROM table WHERE col = ? '
+                )
+            ];
+        },
+    );
+    is_deeply $exp, $got, '_get_param_order'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = ( [
+            undef,
+            'SELECT * FROM table WHERE col1 = ? AND col2 = ?',
+        ],
+        do {
+            [
+                DBIx::Squirrel::db::_get_param_order(
+                    ' SELECT * FROM table WHERE col1 = ? AND col2 = ? '
+                )
+            ];
+        },
+    );
+    is_deeply $exp, $got, '_get_param_order'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = ( [ {
+                1 => '$1',
+            },
+            'SELECT * FROM table WHERE col = ?',
+        ],
+        do {
+            [
+                DBIx::Squirrel::db::_get_param_order(
+                    ' SELECT * FROM table WHERE col = $1 '
+                )
+            ];
+        },
+    );
+    is_deeply $exp, $got, '_get_param_order'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = ( [ {
+                1 => '$1',
+                2 => '$2',
+            },
+            'SELECT * FROM table WHERE col1 = ? AND col2 = ?',
+        ],
+        do {
+            [
+                DBIx::Squirrel::db::_get_param_order(
+                    ' SELECT * FROM table WHERE col1 = $1 AND col2 = $2 '
+                )
+            ];
+        },
+    );
+    is_deeply $exp, $got, '_get_param_order'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = ( [ {
+                1 => '?1',
+            },
+            'SELECT * FROM table WHERE col = ?',
+        ],
+        do {
+            [
+                DBIx::Squirrel::db::_get_param_order(
+                    ' SELECT * FROM table WHERE col = ?1 '
+                )
+            ];
+        },
+    );
+    is_deeply $exp, $got, '_get_param_order'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = ( [ {
+                1 => '?1',
+                2 => '?2',
+            },
+            'SELECT * FROM table WHERE col1 = ? AND col2 = ?',
+        ],
+        do {
+            [
+                DBIx::Squirrel::db::_get_param_order(
+                    ' SELECT * FROM table WHERE col1 = ?1 AND col2 = ?2 '
+                )
+            ];
+        },
+    );
+    is_deeply $exp, $got, '_get_param_order'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = ( [ {
+                1 => ':1',
+            },
+            'SELECT * FROM table WHERE col = ?',
+        ],
+        do {
+            [
+                DBIx::Squirrel::db::_get_param_order(
+                    ' SELECT * FROM table WHERE col = :1 '
+                )
+            ];
+        },
+    );
+    is_deeply $exp, $got, '_get_param_order'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = ( [ {
+                1 => ':1',
+                2 => ':2',
+            },
+            'SELECT * FROM table WHERE col1 = ? AND col2 = ?',
+        ],
+        do {
+            [
+                DBIx::Squirrel::db::_get_param_order(
+                    ' SELECT * FROM table WHERE col1 = :1 AND col2 = :2 '
+                )
+            ];
+        },
+    );
+    is_deeply $exp, $got, '_get_param_order'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = ( [ {
+                1 => ':n',
+            },
+            'SELECT * FROM table WHERE col = ?',
+        ],
+        do {
+            [
+                DBIx::Squirrel::db::_get_param_order(
+                    ' SELECT * FROM table WHERE col = :n '
+                )
+            ];
+        },
+    );
+    is_deeply $exp, $got, '_get_param_order'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = ( [ {
+                1 => ':n1',
+                2 => ':n2',
+            },
+            'SELECT * FROM table WHERE col1 = ? AND col2 = ?',
+        ],
+        do {
+            [
+                DBIx::Squirrel::db::_get_param_order(
+                    ' SELECT * FROM table WHERE col1 = :n1 AND col2 = :n2 '
+                )
+            ];
+        },
+    );
+    is_deeply $exp, $got, '_get_param_order'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = ( [ {
+                1 => ':id',
+            },
+            (
+                join ' ', (
+                    'SELECT *',
+                    'FROM media_types',
+                    'WHERE MediaTypeId = ?',
+                )
+            ),
+            (
+                join ' ', (
+                    'SELECT *',
+                    'FROM media_types',
+                    'WHERE MediaTypeId = :id',
+                )
+            ),
+        ],
+        do {
+            [
+                DBIx::Squirrel::db::_common_prepare_work(
+                    join ' ', (
+                        'SELECT *',
+                        'FROM media_types',
+                        'WHERE MediaTypeId = :id',
+                    )
+                )
+            ];
+        },
+    );
+    is_deeply $exp, $got, '_common_prepare_work'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = ( [ {
+                1 => ':id',
+            },
+            (
+                join ' ', (
+                    'SELECT *',
+                    'FROM media_types',
+                    'WHERE MediaTypeId = ?',
+                )
+            ),
+            (
+                join ' ', (
+                    'SELECT *',
+                    'FROM media_types',
+                    'WHERE MediaTypeId = :id',
+                )
+            ),
+        ],
+        do {
+            [
+                DBIx::Squirrel::db::_common_prepare_work(
+                    join ' ', (
+                        'SELECT *',
+                        'FROM media_types',
+                        'WHERE MediaTypeId = :id',
+                    )
+                )
+            ];
+        },
+    );
+    is_deeply $exp, $got, '_common_prepare_work'
+      or dump_val { exp => $exp, got => $got };
+
+    $sth = $standard_dbi_dbh->prepare(
+        join ' ', (
+            'SELECT *',
+            'FROM media_types',
+            'WHERE MediaTypeId = ?',
+        )
+    );
+
+    ( $exp, $got ) = ( [
+            undef,
+            (
+                join ' ', (
+                    'SELECT *',
+                    'FROM media_types',
+                    'WHERE MediaTypeId = ?',
+                )
+            ),
+            (
+                join ' ', (
+                    'SELECT *',
+                    'FROM media_types',
+                    'WHERE MediaTypeId = ?',
+                )
+            ),
+        ],
+        do {
+            [ DBIx::Squirrel::db::_common_prepare_work( $sth ) ];
+        },
+    );
+    is_deeply $exp, $got, '_common_prepare_work'
+      or dump_val { exp => $exp, got => $got };
+
+    $sth = $standard_ekorn_dbh->prepare(
+        join ' ', (
+            'SELECT *',
+            'FROM media_types',
+            'WHERE MediaTypeId = :id',
+        )
+    );
+
+    ( $exp, $got ) = ( [ {
+                1 => ':id',
+            },
+            (
+                join ' ', (
+                    'SELECT *',
+                    'FROM media_types',
+                    'WHERE MediaTypeId = ?',
+                )
+            ),
+            (
+                join ' ', (
+                    'SELECT *',
+                    'FROM media_types',
+                    'WHERE MediaTypeId = :id',
+                )
+            ),
+        ],
+        do {
+            [ DBIx::Squirrel::db::_common_prepare_work( $sth ) ];
+        },
+    );
+    is_deeply $exp, $got, '_common_prepare_work'
+      or dump_val { exp => $exp, got => $got };
 
     return;
 }
