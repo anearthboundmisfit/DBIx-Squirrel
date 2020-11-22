@@ -78,10 +78,10 @@ sub _format_params {
         }
     };
     return do {
-        whine 'Check bind values' if @params % 2;
         if ( my %order = _order_of_placeholders_if_positional( $order ) ) {
             map { ( $order{ $_ } => $params[ $_ - 1 ] ) } keys %order;
         } else {
+            whine 'Check bind values' if @params % 2;
             @params;
         }
     };
