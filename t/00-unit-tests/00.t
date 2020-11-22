@@ -39,6 +39,8 @@ sub test_the_basics {
     diag "Test the basics";
     diag "";
 
+    # Check that "whine" emits warnings
+
     ( $exp, $got ) = (
         99,
         do {
@@ -56,8 +58,12 @@ sub test_the_basics {
     };
     like $stderr, qr/Got another warning at/, 'whine';
 
+    # Check that "throw" triggers exceptions
+
     throws_ok { throw 'An error' } ( qr/An error at/, 'throw' );
     throws_ok { throw '%s error', 'Another' } ( qr/Another error at/, 'throw' );
+
+    # Check that "DBIx::Squirrel::dr::_is_db_handle" does its thing
 
     $standard_dbi_dbh = DBI->connect( @T_DB_CONNECT_ARGS );
     ok DBIx::Squirrel::dr::_is_db_handle( $standard_dbi_dbh ),
@@ -68,14 +74,17 @@ sub test_the_basics {
       '_is_db_handle';
     is DBIx::Squirrel::dr::_is_db_handle( $standard_dbi_dbh ), 'DBI::db',
       '_is_db_handle';
-    isa_ok $standard_dbi_dbh, 'DBI::db';
 
-    ( $standard_ekorn_dbh, $cached_ekorn_dbh ) = (
-        DBIx::Squirrel->connect( @T_DB_CONNECT_ARGS ),
-        DBIx::Squirrel->connect_cached( @T_DB_CONNECT_ARGS ),
-    );
+    # Check that we can open standard and cached DBIx::Squirrel::db
+    # connections
+
+    $standard_ekorn_dbh = DBIx::Squirrel->connect( @T_DB_CONNECT_ARGS );
     isa_ok $standard_ekorn_dbh, 'DBIx::Squirrel::db';
-    isa_ok $cached_ekorn_dbh,   'DBIx::Squirrel::db';
+
+    $cached_ekorn_dbh = DBIx::Squirrel->connect_cached( @T_DB_CONNECT_ARGS );
+    isa_ok $cached_ekorn_dbh, 'DBIx::Squirrel::db';
+
+    # Check that "DBIx::Squirrel::db::_get_param_order" works properly
 
     ( $exp, $got ) = ( [
             undef,
@@ -239,38 +248,7 @@ sub test_the_basics {
     is_deeply $exp, $got, '_get_param_order'
       or dump_val { exp => $exp, got => $got };
 
-    ( $exp, $got ) = ( [ {
-                1 => ':id',
-            },
-            (
-                join ' ', (
-                    'SELECT *',
-                    'FROM media_types',
-                    'WHERE MediaTypeId = ?',
-                )
-            ),
-            (
-                join ' ', (
-                    'SELECT *',
-                    'FROM media_types',
-                    'WHERE MediaTypeId = :id',
-                )
-            ),
-        ],
-        do {
-            [
-                DBIx::Squirrel::db::_common_prepare_work(
-                    join ' ', (
-                        'SELECT *',
-                        'FROM media_types',
-                        'WHERE MediaTypeId = :id',
-                    )
-                )
-            ];
-        },
-    );
-    is_deeply $exp, $got, '_common_prepare_work'
-      or dump_val { exp => $exp, got => $got };
+    # Check that "DBIx::Squirrel::db::_common_prepare_work" works properly
 
     ( $exp, $got ) = ( [ {
                 1 => ':id',
@@ -302,7 +280,7 @@ sub test_the_basics {
             ];
         },
     );
-    is_deeply $exp, $got, '_common_prepare_work'
+    is_deeply $exp, $got, '_common_prepare_work (plain text statement)'
       or dump_val { exp => $exp, got => $got };
 
     $sth = $standard_dbi_dbh->prepare(
@@ -334,7 +312,7 @@ sub test_the_basics {
             [ DBIx::Squirrel::db::_common_prepare_work( $sth ) ];
         },
     );
-    is_deeply $exp, $got, '_common_prepare_work'
+    is_deeply $exp, $got, '_common_prepare_work (DBI::st)'
       or dump_val { exp => $exp, got => $got };
 
     $sth = $standard_ekorn_dbh->prepare(
@@ -367,7 +345,214 @@ sub test_the_basics {
             [ DBIx::Squirrel::db::_common_prepare_work( $sth ) ];
         },
     );
-    is_deeply $exp, $got, '_common_prepare_work'
+    is_deeply $exp, $got, '_common_prepare_work (DBIx::Squirrel::st)'
+      or dump_val { exp => $exp, got => $got };
+
+    # Check that "DBIx::Squirrel::st::_order_of_placeholders_if_positional"
+    # works properly
+
+    ( $exp, $got ) = (
+        undef,
+        DBIx::Squirrel::st::_order_of_placeholders_if_positional( undef ),
+    );
+    is_deeply $exp, $got, '_order_of_placeholders_if_positional'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        undef,
+        DBIx::Squirrel::st::_order_of_placeholders_if_positional( {
+                1 => ':name',
+            }
+        ),
+    );
+    is_deeply $exp, $got, '_order_of_placeholders_if_positional'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        undef,
+        DBIx::Squirrel::st::_order_of_placeholders_if_positional( {
+                1 => ':name',
+                2 => ':2',
+            }
+        ),
+    );
+    is_deeply $exp, $got, '_order_of_placeholders_if_positional'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = ( {
+            1 => ':1',
+        },
+        {
+            DBIx::Squirrel::st::_order_of_placeholders_if_positional( {
+                    1 => ':1',
+                }
+            )
+        },
+    );
+    is_deeply $exp, $got, '_order_of_placeholders_if_positional'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = ( {
+            1 => ':1',
+            2 => ':2'
+        },
+        {
+            DBIx::Squirrel::st::_order_of_placeholders_if_positional( {
+                    1 => ':1',
+                    2 => ':2',
+                }
+            )
+        },
+    );
+    is_deeply $exp, $got, '_order_of_placeholders_if_positional'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = ( {
+            1 => ':1',
+        },
+        {
+            DBIx::Squirrel::st::_order_of_placeholders_if_positional( {
+                    1 => ':1',
+                }
+            )
+        },
+    );
+    is_deeply $exp, $got, '_order_of_placeholders_if_positional'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = ( {
+            1 => '$1',
+            2 => '$2'
+        },
+        {
+            DBIx::Squirrel::st::_order_of_placeholders_if_positional( {
+                    1 => '$1',
+                    2 => '$2',
+                }
+            )
+        },
+    );
+    is_deeply $exp, $got, '_order_of_placeholders_if_positional'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = ( {
+            1 => '?1',
+            2 => '?2'
+        },
+        {
+            DBIx::Squirrel::st::_order_of_placeholders_if_positional( {
+                    1 => '?1',
+                    2 => '?2',
+                }
+            )
+        },
+    );
+    is_deeply $exp, $got, '_order_of_placeholders_if_positional'
+      or dump_val { exp => $exp, got => $got };
+
+    # Check that "DBIx::Squirrel::st::_format_params" works
+
+    ( $exp, $got ) = (
+        [],
+        [ DBIx::Squirrel::st::_format_params( undef ) ],
+    );
+    is_deeply $exp, $got, '_format_params'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        [ 'a', 'b' ],
+        [
+            DBIx::Squirrel::st::_format_params(
+                undef,
+                ( 'a', 'b' ),
+            )
+        ],
+    );
+    is_deeply $exp, $got, '_format_params'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        { '?1' => 'a', '?2' => 'b' },
+        {
+            DBIx::Squirrel::st::_format_params(
+                { 1 => '?1', 2 => '?2' },
+                ( 'a', 'b' ),
+            )
+        },
+    );
+    is_deeply $exp, $got, '_format_params'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        { '$1' => 'a', '$2' => 'b' },
+        {
+            DBIx::Squirrel::st::_format_params(
+                { 1 => '$1', 2 => '$2' },
+                ( 'a', 'b' ),
+            )
+        },
+    );
+    is_deeply $exp, $got, '_format_params'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        { ':1' => 'a', ':2' => 'b' },
+        {
+            DBIx::Squirrel::st::_format_params(
+                { 1 => ':1', 2 => ':2' },
+                ( 'a', 'b' ),
+            )
+        },
+    );
+    is_deeply $exp, $got, '_format_params'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        { ':n1' => 'a', ':n2' => 'b' },
+        {
+            DBIx::Squirrel::st::_format_params(
+                { 1 => ':n1', 2 => ':n2' },
+                ( ':n1' => 'a', ':n2' => 'b' ),
+            )
+        },
+    );
+    is_deeply $exp, $got, '_format_params'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        { 'n1' => 'a', 'n2' => 'b' },
+        {
+            DBIx::Squirrel::st::_format_params(
+                { 1 => ':n1', 2 => ':n2' },
+                ( 'n1' => 'a', 'n2' => 'b' ),
+            )
+        },
+    );
+    is_deeply $exp, $got, '_format_params'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        { 'n1' => 'a', 'n2' => 'b' },
+        {
+            DBIx::Squirrel::st::_format_params(
+                { 1 => ':n1', 2 => ':n2' },
+                [ 'n1' => 'a', 'n2' => 'b' ],
+            )
+        },
+    );
+    is_deeply $exp, $got, '_format_params'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        { 'n1' => 'a', 'n2' => 'b' },
+        {
+            DBIx::Squirrel::st::_format_params(
+                { 1    => ':n1', 2    => ':n2' },
+                { 'n1' => 'a',   'n2' => 'b' },
+            )
+        },
+    );
+    is_deeply $exp, $got, '_format_params'
       or dump_val { exp => $exp, got => $got };
 
     return;
