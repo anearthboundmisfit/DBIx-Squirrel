@@ -555,6 +555,270 @@ sub test_the_basics {
     is_deeply $exp, $got, '_format_params'
       or dump_val { exp => $exp, got => $got };
 
+    # Check that "DBIx::Squirrel::st::bind_param" works properly
+
+    $sth = $standard_ekorn_dbh->prepare(
+        join ' ', (
+            'SELECT *',
+            'FROM media_types',
+            'WHERE Name = ?',
+        )
+    );
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        { $sth->bind_param( 1 => 'AAC audio file' ) },
+    );
+    is_deeply $exp, $got, 'bind_param'
+      or dump_val { exp => $exp, got => $got };
+
+    $sth = $standard_ekorn_dbh->prepare(
+        join ' ', (
+            'SELECT *',
+            'FROM media_types',
+            'WHERE Name = ?1',
+        )
+    );
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        { $sth->bind_param( '?1' => 'AAC audio file' ) },
+    );
+    is_deeply $exp, $got, 'bind_param'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        { $sth->bind_param( 1 => 'AAC audio file' ) },
+    );
+    is_deeply $exp, $got, 'bind_param'
+      or dump_val { exp => $exp, got => $got };
+
+    $sth = $standard_ekorn_dbh->prepare(
+        join ' ', (
+            'SELECT *',
+            'FROM media_types',
+            'WHERE Name = $1',
+        )
+    );
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        { $sth->bind_param( '$1' => 'AAC audio file' ) },
+    );
+    is_deeply $exp, $got, 'bind_param'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        { $sth->bind_param( 1 => 'AAC audio file' ) },
+    );
+    is_deeply $exp, $got, 'bind_param'
+      or dump_val { exp => $exp, got => $got };
+
+    $sth = $standard_ekorn_dbh->prepare(
+        join ' ', (
+            'SELECT *',
+            'FROM media_types',
+            'WHERE Name = :1',
+        )
+    );
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        { $sth->bind_param( ':1' => 'AAC audio file' ) },
+    );
+    is_deeply $exp, $got, 'bind_param'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        { $sth->bind_param( 1 => 'AAC audio file' ) },
+    );
+    is_deeply $exp, $got, 'bind_param'
+      or dump_val { exp => $exp, got => $got };
+
+    $sth = $standard_ekorn_dbh->prepare(
+        join ' ', (
+            'SELECT *',
+            'FROM media_types',
+            'WHERE Name = :name',
+        )
+    );
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        { $sth->bind_param( ':name' => 'AAC audio file' ) },
+    );
+    is_deeply $exp, $got, 'bind_param'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        { $sth->bind_param( name => 'AAC audio file' ) },
+    );
+    is_deeply $exp, $got, 'bind_param'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        { $sth->bind_param( 1 => 'AAC audio file' ) },
+    );
+    is_deeply $exp, $got, 'bind_param'
+      or dump_val { exp => $exp, got => $got };
+
+    # Check the "DBIx::Squirrel::st::bind" works properly
+
+    $sth = $standard_ekorn_dbh->prepare(
+        join ' ', (
+            'SELECT *',
+            'FROM media_types',
+            'WHERE Name = ?',
+        )
+    );
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        do {
+            $res = $sth->bind( 'AAC audio file' );
+            is $res, $sth, 'bind';
+            $sth->{ ParamValues };
+        },
+    );
+    is_deeply $exp, $got, 'bind'
+      or dump_val { exp => $exp, got => $got };
+
+    $sth = $standard_ekorn_dbh->prepare(
+        join ' ', (
+            'SELECT *',
+            'FROM media_types',
+            'WHERE Name = ?1',
+        )
+    );
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        do {
+            $res = $sth->bind( 'AAC audio file' );
+            is $res, $sth, 'bind';
+            $sth->{ ParamValues };
+        },
+    );
+    is_deeply $exp, $got, 'bind'
+      or dump_val { exp => $exp, got => $got };
+
+    $sth = $standard_ekorn_dbh->prepare(
+        join ' ', (
+            'SELECT *',
+            'FROM media_types',
+            'WHERE Name = $1',
+        )
+    );
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        do {
+            $res = $sth->bind( 'AAC audio file' );
+            is $res, $sth, 'bind';
+            $sth->{ ParamValues };
+        },
+    );
+    is_deeply $exp, $got, 'bind'
+      or dump_val { exp => $exp, got => $got };
+
+    $sth = $standard_ekorn_dbh->prepare(
+        join ' ', (
+            'SELECT *',
+            'FROM media_types',
+            'WHERE Name = :1',
+        )
+    );
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        do {
+            $res = $sth->bind( 'AAC audio file' );
+            is $res, $sth, 'bind';
+            $sth->{ ParamValues };
+        },
+    );
+    is_deeply $exp, $got, 'bind'
+      or dump_val { exp => $exp, got => $got };
+
+    $sth = $standard_ekorn_dbh->prepare(
+        join ' ', (
+            'SELECT *',
+            'FROM media_types',
+            'WHERE Name = :name',
+        )
+    );
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        do {
+            $res = $sth->bind( ':name' => 'AAC audio file' );
+            is $res, $sth, 'bind';
+            $sth->{ ParamValues };
+        },
+    );
+    is_deeply $exp, $got, 'bind'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        do {
+            $res = $sth->bind( { ':name' => 'AAC audio file' } );
+            is $res, $sth, 'bind';
+            $sth->{ ParamValues };
+        },
+    );
+    is_deeply $exp, $got, 'bind'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        do {
+            $res = $sth->bind( [ ':name' => 'AAC audio file' ] );
+            is $res, $sth, 'bind';
+            $sth->{ ParamValues };
+        },
+    );
+    is_deeply $exp, $got, 'bind'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        do {
+            $res = $sth->bind( name => 'AAC audio file' );
+            is $res, $sth, 'bind';
+            $sth->{ ParamValues };
+        },
+    );
+    is_deeply $exp, $got, 'bind'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        do {
+            $res = $sth->bind( { name => 'AAC audio file' } );
+            is $res, $sth, 'bind';
+            $sth->{ ParamValues };
+        },
+    );
+    is_deeply $exp, $got, 'bind'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        { 1 => 'AAC audio file' },
+        do {
+            $res = $sth->bind( [ name => 'AAC audio file' ] );
+            is $res, $sth, 'bind';
+            $sth->{ ParamValues };
+        },
+    );
+    is_deeply $exp, $got, 'bind'
+      or dump_val { exp => $exp, got => $got };
+
     return;
 }
 
