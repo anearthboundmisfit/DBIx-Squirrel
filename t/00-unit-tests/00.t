@@ -15,24 +15,101 @@ use T::Database ':all';
 
 $| = 1;
 
-my ( $standard_dbi_dbh, $standard_ekorn_dbh, $cached_ekorn_dbh ) = (
-    DBI->connect( @T_DB_CONNECT_ARGS ),
-    DBIx::Squirrel->connect( @T_DB_CONNECT_ARGS ),
-    DBIx::Squirrel->connect_cached( @T_DB_CONNECT_ARGS ),
+our (
+    $sql, $sth, $res, $got, @got, $exp, @exp, $row, $stdout, $stderr,
+    @hashrefs, @arrayrefs, $standard_dbi_dbh, $standard_ekorn_dbh,
+    $cached_ekorn_dbh,
 );
 
-isa_ok $standard_dbi_dbh,   'DBI::db';
-isa_ok $standard_ekorn_dbh, 'DBIx::Squirrel::db';
-isa_ok $cached_ekorn_dbh,   'DBIx::Squirrel::db';
+print STDERR "\n";
+test_the_basics();
 
-test_clone_connection( $_ ) foreach (
-    [ $standard_dbi_dbh,   'standard DBI connection' ],
-    [ $standard_ekorn_dbh, 'standard DBIx::Squirrel connection' ],
-    [ $cached_ekorn_dbh,   'cached DBIx::Squirrel connection' ],
-);
+# test_clone_connection( $_ ) foreach (
+#     [ $standard_dbi_dbh,   'standard DBI connection' ],
+#     [ $standard_ekorn_dbh, 'standard DBIx::Squirrel connection' ],
+#     [ $cached_ekorn_dbh,   'cached DBIx::Squirrel connection' ],
+# );
 
 ok 1, __FILE__ . ' complete';
 done_testing;
+
+sub test_the_basics {
+
+    diag "";
+    diag "Test the basics";
+    diag "";
+
+    ( $exp, $got ) = (
+        99,
+        do {
+            ( $stderr ) = capture_stderr {
+                whine 'Got a warning';
+            };
+            99;
+        },
+    );
+    is $got, $exp, 'whine';
+    like $stderr, qr/Got a warning at/, 'whine';
+
+    ( $stderr ) = capture_stderr {
+        whine 'Got %s warning', 'another';
+    };
+    like $stderr, qr/Got another warning at/, 'whine';
+
+    throws_ok { throw 'An error' } ( qr/An error at/, 'throw' );
+    throws_ok { throw '%s error', 'Another' } ( qr/Another error at/, 'throw' );
+
+    ( $exp, $got ) = ( [
+            undef,
+            "SELECT * FROM table WHERE col = ?",
+        ],
+        do {
+            [
+                DBIx::Squirrel::db::_get_param_order(
+                    '   SELECT * FROM table WHERE col = ?   '
+                )
+            ];
+        },
+    );
+    is_deeply $exp, $got, '_get_param_order'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = ( [ {
+                1 => "\$1",
+            },
+            "SELECT * FROM table WHERE col = ?",
+        ],
+        do {
+            [
+                DBIx::Squirrel::db::_get_param_order(
+                    '   SELECT * FROM table WHERE col = $1   '
+                )
+            ];
+        },
+    );
+    is_deeply $exp, $got, '_get_param_order'
+      or dump_val { exp => $exp, got => $got };
+
+    $standard_dbi_dbh = DBI->connect( @T_DB_CONNECT_ARGS );
+    ok DBIx::Squirrel::dr::_is_db_handle( $standard_dbi_dbh ),
+      '_is_db_handle';
+    ok !DBIx::Squirrel::dr::_is_db_handle( '' ),
+      '_is_db_handle';
+    ok !DBIx::Squirrel::dr::_is_db_handle( \'' ),
+      '_is_db_handle';
+    is DBIx::Squirrel::dr::_is_db_handle( $standard_dbi_dbh ), 'DBI::db',
+      '_is_db_handle';
+    isa_ok $standard_dbi_dbh, 'DBI::db';
+
+    ( $standard_ekorn_dbh, $cached_ekorn_dbh ) = (
+        DBIx::Squirrel->connect( @T_DB_CONNECT_ARGS ),
+        DBIx::Squirrel->connect_cached( @T_DB_CONNECT_ARGS ),
+    );
+    isa_ok $standard_ekorn_dbh, 'DBIx::Squirrel::db';
+    isa_ok $cached_ekorn_dbh,   'DBIx::Squirrel::db';
+
+    return;
+}
 
 sub test_clone_connection {
     my ( $master, $description ) = @{ +shift };
@@ -57,10 +134,6 @@ sub test_clone_connection {
 
 sub test_prepare_execute_fetch_single_row {
     my ( $dbh ) = @_;
-    my (
-        $sql, $sth, $res, $got, @got, $exp, @exp, $row, $stdout, $stderr,
-        @hashrefs, @arrayrefs
-    );
 
     diag "Result contains a single row";
     diag "";
@@ -104,10 +177,6 @@ sub test_prepare_execute_fetch_single_row {
 
 sub test_prepare_execute_fetch_multiple_rows {
     my ( $dbh ) = @_;
-    my (
-        $sql, $sth, $res, $got, @got, $exp, @exp, $row, $stdout, $stderr,
-        @hashrefs, @arrayrefs
-    );
 
     diag "";
     diag "Result contains multiple rows";

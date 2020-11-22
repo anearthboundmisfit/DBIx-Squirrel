@@ -37,27 +37,24 @@ sub prepare {
 }
 
 sub _common_prepare_work {
-    my $statement = do {
-        if ( blessed( $_[ 0 ] ) ) {
-            if ( $_[ 0 ]->isa( 'DBI::st' ) ) {
-                shift->{ Statement };
-            } elsif ( $_[ 0 ]->isa( 'DBIx::Squirrel::st' ) ) {
-                shift->{ private_dbix_squirrel }{ sql };
+    my ( $order, $std, $sql ) = do {
+        my $statement = do {
+            if ( blessed( $_[ 0 ] ) ) {
+                if ( $_[ 0 ]->isa( 'DBI::st' ) ) {
+                    shift->{ Statement };
+                } elsif ( $_[ 0 ]->isa( 'DBIx::Squirrel::st' ) ) {
+                    shift->{ private_dbix_squirrel }{ sql };
+                } else {
+                    throw 'Expected a statement handle';
+                }
             } else {
-                throw 'Expected a statement handle';
+                shift;
             }
-        } else {
-            shift;
-        }
+        };
+        ( _get_param_order( $statement ), $statement );
     };
-    if ( defined $statement ) {
-        $statement =~ s{\s+\Z}{}s;
-        $statement =~ s{\A\s+}{}s;
-    }
-    unless ( length $statement ) {
-        throw 'Expected a statement';
-    }
-    return ( _get_param_order( $statement ), $statement );
+    throw 'Expected a statement' unless length $std;
+    return ( $order, $std, $sql );
 }
 
 sub _get_param_order {
@@ -65,10 +62,10 @@ sub _get_param_order {
     my $order = do {
         my %order;
         if ( $sql ) {
+            $sql =~ s{\s+\Z}{}s;
+            $sql =~ s{\A\s+}{}s;
             my @params = $sql =~ m{[\:\$\?]\w+\b}g;
             if ( my $count = @params ) {
-                $sql =~ s{\s+\Z}{}s;
-                $sql =~ s{\A\s+}{}s;
                 $sql =~ s{[\:\$\?]\w+\b}{?}g;
                 for ( my $p = 0 ; $p < $count ; $p += 1 ) {
                     $order{ 1 + $p } = $params[ $p ];

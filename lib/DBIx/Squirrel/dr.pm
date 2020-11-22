@@ -39,12 +39,15 @@ sub connect {
 
 sub _is_db_handle {
     my ( $maybe_dbh ) = @_;
+    my $blessed;
     if ( ref $maybe_dbh ) {
-        if ( blessed( $maybe_dbh ) && $maybe_dbh->isa( 'DBI::db' ) ) {
-            return 1;
+        if ( $blessed = blessed( $maybe_dbh ) ) {
+            if ( $maybe_dbh->isa( 'DBI::db' ) ) {
+                return $blessed;
+            }
         }
     }
-    return;
+    return $blessed;
 }
 
 sub connect_clone {
