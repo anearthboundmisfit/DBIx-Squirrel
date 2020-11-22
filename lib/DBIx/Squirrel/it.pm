@@ -50,8 +50,7 @@ sub DESTROY {
 }
 
 sub new {
-    local ( $_ );
-    my $self = do {
+    $_ = do {
         my $package = ref $_[ 0 ] ? ref shift : shift;
         my $sth     = shift;
         if ( ref $sth && blessed( $sth ) && $sth->isa( 'DBI::st' ) ) {
@@ -70,7 +69,7 @@ sub new {
             undef;
         }
     };
-    return $self;
+    return $_;
 }
 
 sub _set_slice {
@@ -138,14 +137,17 @@ sub _finish {
 }
 
 sub first {
-    my ( $c, $self, $id ) = shift->_context;
-    $self->reset( @_ );
-    return $_ = $self->_get_row;
+    my ( $c, $self ) = shift->_context;
+    $_ = do {
+        $self->reset( @_ );
+        $self->_get_row;
+    };
+    return $_;
 }
 
 sub reset {
     local ( $_ );
-    my ( $c, $self, $id ) = shift->_context;
+    my ( $c, $self ) = shift->_context;
     #
     # When using the "reset" method to modify the disposition and number of
     # rows fetched at a time, we allow ($slice, $max_rows), ($max_rows, $slice),
@@ -176,7 +178,9 @@ sub _get_row {
     my ( $c, $self ) = shift->_context;
     return if $c->{ fi } || ( !$c->{ ex } && !$self->execute );
     my $row = do {
-        $self->_charge_buffer if $self->_buffer_empty;
+        if ( $self->_buffer_empty ) {
+            $self->_charge_buffer;
+        }
         if ( $self->_buffer_empty ) {
             $c->{ fi } = 1;
             undef;
@@ -189,30 +193,31 @@ sub _get_row {
 }
 
 sub execute {
-    local ( $_ );
     my ( $c, $self ) = shift->_context;
-    my $sth = $c->{ st };
-    return unless $sth;
-    my $res = do {
-        if ( $c->{ ex } || $c->{ fi } ) {
-            $self->reset;
-        }
-        if ( $sth->execute( @_ ? @_ : @{ $c->{ bp } } ) ) {
-            if ( my $row_count = $self->_charge_buffer ) {
-                $c->{ ex } = 1;
-                $row_count;
+    $_ = do {
+        if ( my $sth = $c->{ st } ) {
+            if ( $c->{ ex } || $c->{ fi } ) {
+                $self->reset;
+            }
+            if ( $sth->execute( @_ ? @_ : @{ $c->{ bp } } ) ) {
+                if ( my $row_count = $self->_charge_buffer ) {
+                    $c->{ ex } = 1;
+                    $row_count;
+                } else {
+                    undef;
+                }
             } else {
-                undef;
+                $c->{ ex } = undef;
             }
         } else {
-            $c->{ ex } = undef;
+            undef;
         }
     };
-    return $res;
+    return $_;
 }
 
 sub _charge_buffer {
-    my ( $c, $self ) = shift->_context;
+    my $c   = $_[ 0 ]->_context;
     my $sth = $c->{ st };
     return unless $sth && $sth->{ Active };
     my $res = do {
@@ -248,86 +253,103 @@ sub _charge_buffer {
 }
 
 sub _buffer_empty {
-    my ( $c, $self ) = $_[ 0 ]->_context;
-    return $c->{ bu } ? @{ $c->{ bu } } < 1 : 1;
+    my $c = $_[ 0 ]->_context;
+    return do {
+        if ( $c->{ bu } ) {
+            1 if @{ $c->{ bu } } < 1;
+        } else {
+            1;
+        }
+    };
 }
 
 sub single {
     my $self = shift;
-    my $res  = do {
-        if ( my $row_count = $self->execute( @_ ) ) {
-            whine 'Query returned more than one row' if $row_count > 1;
-            $self->_get_row;
-        } else {
-            undef;
-        }
+    $_ = do {
+        my $res = do {
+            if ( my $row_count = $self->execute( @_ ) ) {
+                if ( $row_count > 1 ) {
+                    whine 'Query returned more than one row';
+                }
+                $self->_get_row;
+            } else {
+                undef;
+            }
+        };
+        $self->reset;
+        $res;
     };
-    # Single binds possibly override constructor binds, so be sure to
-    # reset or things get unpredicable
-    $self->reset;
-    return $_ = $res;
+    return $_;
 }
 
 sub find {
     my $self = shift;
-    my $res  = do {
+    $_ = do {
         if ( my $row_count = $self->execute( @_ ) ) {
             $self->_get_row;
         } else {
             undef;
         }
     };
-    return $_ = $res;
+    return $_;
 }
 
 sub all {
-    local ( $_ );
     my $self = shift;
-    my $res  = do {
-        if ( $self->execute( @_ ) ) {
-            $self->remaining;
-        } else {
-            [];
-        }
+    $_ = do {
+        my $res = do {
+            if ( $self->execute( @_ ) ) {
+                $self->remaining;
+            } else {
+                [];
+            }
+        };
+        $self->reset;
+        $res;
     };
-    # Find binds possibly override constructor binds, so be sure to
-    # reset or things get unpredicable
-    $self->reset;
-    return wantarray ? @{ $res } : $res;
+    return wantarray ? @{ $_ } : $_;
 }
 
 sub remaining {
-    local ( $_ );
     my ( $c, $self ) = shift->_context;
-    return if $c->{ fi } || ( !$c->{ ex } && !$self->execute );
-    while ( $self->_charge_buffer ) { ; }
-    my $rows = $c->{ bu };
-    $c->{ rc } = $c->{ rf };
-    $c->{ bu } = undef;
-    $self->reset;
-    return wantarray ? @{ $rows } : $rows;
+    $_ = do {
+        if ( $c->{ fi } || ( !$c->{ ex } && !$self->execute ) ) {
+            undef;
+        } else {
+            while ( $self->_charge_buffer ) { ; }
+            my $rows = $c->{ bu };
+            $c->{ rc } = $c->{ rf };
+            $c->{ bu } = undef;
+            $self->reset;
+            $rows;
+        }
+    };
+    return wantarray ? @{ $_ } : $_;
 }
 
 sub next {
     my $self = shift;
-    if ( @_ ) {
-        if ( ref $_[ 0 ] ) {
-            $self->_set_slice( shift );
-            if ( @_ ) {
-                $self->_set_max_rows( shift );
-            } else {
-                $self->_set_max_rows;
-            }
-        } else {
-            $self->_set_max_rows( shift );
-            if ( @_ ) {
+    $_ = do {
+        if ( @_ ) {
+            if ( ref $_[ 0 ] ) {
                 $self->_set_slice( shift );
+                if ( @_ ) {
+                    $self->_set_max_rows( shift );
+                } else {
+                    $self->_set_max_rows;
+                }
             } else {
-                $self->_set_slice;
+                $self->_set_max_rows( shift );
+                if ( @_ ) {
+                    $self->_set_slice( shift );
+                } else {
+                    $self->_set_slice;
+                }
             }
         }
-    }
-    return $_ = $self->_get_row;
+        $self->_get_row;
+    };
+    return $_;
 }
 
 sub reiterate {
