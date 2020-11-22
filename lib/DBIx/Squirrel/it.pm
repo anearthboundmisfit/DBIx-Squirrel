@@ -138,10 +138,9 @@ sub _finish {
 }
 
 sub first {
-    local ( $_ );
     my ( $c, $self, $id ) = shift->_context;
     $self->reset( @_ );
-    return $self->_get_row;
+    return $_ = $self->_get_row;
 }
 
 sub reset {
@@ -254,7 +253,6 @@ sub _buffer_empty {
 }
 
 sub single {
-    local ( $_ );
     my $self = shift;
     my $res  = do {
         if ( my $row_count = $self->execute( @_ ) ) {
@@ -267,11 +265,10 @@ sub single {
     # Single binds possibly override constructor binds, so be sure to
     # reset or things get unpredicable
     $self->reset;
-    return $res;
+    return $_ = $res;
 }
 
 sub find {
-    local ( $_ );
     my $self = shift;
     my $res  = do {
         if ( my $row_count = $self->execute( @_ ) ) {
@@ -280,7 +277,7 @@ sub find {
             undef;
         }
     };
-    return $res;
+    return $_ = $res;
 }
 
 sub all {
@@ -312,7 +309,6 @@ sub remaining {
 }
 
 sub next {
-    local ( $_ );
     my $self = shift;
     if ( @_ ) {
         if ( ref $_[ 0 ] ) {
@@ -331,7 +327,7 @@ sub next {
             }
         }
     }
-    return $self->_get_row;
+    return $_ = $self->_get_row;
 }
 
 sub reiterate {
