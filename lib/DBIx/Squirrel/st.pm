@@ -36,21 +36,7 @@ sub bind {
     if ( @_ ) {
         my $order = $sth->{ private_dbix_squirrel }{ params };
         if ( $order || ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) ) {
-            my %kv = do {
-                my @params = do {
-                    if ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) {
-                        %{ +shift };
-                    } elsif ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'ARRAY' ) {
-                        _format_params( $order, @{ +shift } );
-                    } else {
-                        _format_params( $order, @_ );
-                    }
-                };
-                if (@params % 2) {
-                    whine 'Check bind values are appropriate for placeholders';
-                }
-                @params;
-            };
+            my %kv = _format_params( $order, @_ );
             while ( my ( $k, $v ) = each %kv ) {
                 if ( $k ) {
                     if ( $k =~ m/^([\:\$\?]?(\d+))$/ ) {
@@ -81,11 +67,24 @@ sub bind {
 }
 
 sub _format_params {
-    if ( my %order = _order_of_placeholders_if_positional( shift ) ) {
-        map { ( $order{ $_ } => $_[ $_ - 1 ] ) } keys %order;
-    } else {
-        @_;
-    }
+    my $order  = shift;
+    my @params = do {
+        if ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) {
+            %{ +shift };
+        } elsif ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'ARRAY' ) {
+            @{ +shift };
+        } else {
+            @_;
+        }
+    };
+    return do {
+        whine 'Check bind values' if @params % 2;
+        if ( my %order = _order_of_placeholders_if_positional( $order ) ) {
+            map { ( $order{ $_ } => $params[ $_ - 1 ] ) } keys %order;
+        } else {
+            @params;
+        }
+    };
 }
 
 sub _order_of_placeholders_if_positional {
@@ -102,29 +101,29 @@ sub _order_of_placeholders_if_positional {
 }
 
 sub bind_param {
-    my $sth    = shift;
-    my $param  = shift;
-    my $result = do {
-        if ( my $order = $sth->{ private_dbix_squirrel }{ params } ) {
-            if ( $param =~ m/^([\:\$\?]?(\d+))$/ ) {
-                $sth->DBI::st::bind_param( $2, @_ );
-            } else {
-                if ( substr( $param, 0, 1 ) ne ':' ) {
-                    $param = ":$param";
-                }
-                my @bound = map { $sth->DBI::st::bind_param( $_, @_ ) } (
-                    grep { $order->{ $_ } eq $param } keys %{ $order },
-                );
-                unless ( @bound || $DBIx::Squirrel::RELAXED_PARAM_CHECKS ) {
-                    throw E_UNK_PH, $param;
-                }
-                $sth;
-            }
+    my $sth   = shift;
+    my $param = shift;
+    my %b;
+    if ( my $order = $sth->{ private_dbix_squirrel }{ params } ) {
+        if ( $param =~ m/^([\:\$\?]?(\d+))$/ ) {
+            $sth->DBI::st::bind_param( $2, ( $b{ $2 } = shift ) );
         } else {
-            $sth->DBI::st::bind_param( $param, @_ );
+            if ( substr( $param, 0, 1 ) ne ':' ) {
+                $param = ":$param";
+            }
+            my @bound = (
+                map    { $sth->DBI::st::bind_param( $_, ( $b{ $_ } = shift ) ) }
+                  grep { $order->{ $_ } eq $param }
+                  keys %{ $order }
+            );
+            unless ( @bound || $DBIx::Squirrel::RELAXED_PARAM_CHECKS ) {
+                throw E_UNK_PH, $param;
+            }
         }
-    };
-    return $result;
+    } else {
+        $sth->DBI::st::bind_param( $param, ( $b{ $param } = shift ) );
+    }
+    return wantarray ? %b : \%b;
 }
 
 sub prepare {
