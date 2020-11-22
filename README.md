@@ -94,16 +94,31 @@ $row = $sth->find('B%');
 ```
 
 ## Description
+DBIx-Squirrel is a Perl 5 module for working with databases.
 
-DBIx-Squirrel is a lightweight DBI extension that makes it easier to write and maintain programs that work with databases. It works just like DBI right out
-of the box (offering comfortable familiarity), and offers a slate of graceful enhancements when they are needed.
+DBIx-Squirrel is a DBI extension insomuch as it subclasses the popular DBI package (and other packages within that namespace), making minimalist enhancements onto its venerable ancestor's interface.
 
-**Highlights**
+As someone who enjoys working with DBI (sometimes preferring it to heavyweight alternatives), I simply wanted to make some small improve the user experience, without those improvements seeming too alien in nature.
 
-- Connect to database handles — pass a database connection handle to the
-`connect` method to clone it. Database connections opened using standard
-DBI may also be cloned and enriched.
-- Built-in support for *`?`*, *`?1`*, *`$1`*, *`:1`*, and *`:name`* parameter
-placeholder styles, regardless of driver.
-- Hassle-free binding of parameter values to placeholders. 
-- Looks and feels like DBI when you need it to, while offering less labour-intensive ways to do things.
+### Design
+
+#### Compatibility
+A developer may confidently replace `use DBI` with `use DBIx::Squirrel` and expect a script to function as it did prior to the change. 
+
+DBIx-Squirrel's enhancements are designed to be low-friction, intuitive (and above all), elective. Things should work as expected, until our requirements change and any deviation from the norm is expected.
+
+In addition to a high degree of backward compatibility, interface-design has been forward-looking, too. Where some DBIx-Squirrel concepts have analogous in DBIx-Class, the same method names will implement analogous behaviours.
+
+#### Ease of use
+DBIx-Squirrel's baseline behaviour is _be like DBI_. There is no barrier to using this module if you are familiar with the DBI or DBI's extensive documentation.
+
+Pretty much all of DBIx-Squirrel's features are enhancements progressive or additive in nature. For most experienced DBI (or DBIx-Class) developers, a cursory glance down the synopsis will be enough to get them started.
+
+### Features
+
+#### Connecting to databases
+
+#### Bind values, parameter placeholders, and binding in general
+
+#### Iterators
+
