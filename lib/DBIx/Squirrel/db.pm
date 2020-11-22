@@ -40,10 +40,10 @@ sub _common_prepare_work {
     my ( $order, $std, $sql ) = do {
         my $statement = do {
             if ( blessed( $_[ 0 ] ) ) {
-                if ( $_[ 0 ]->isa( 'DBI::st' ) ) {
-                    shift->{ Statement };
-                } elsif ( $_[ 0 ]->isa( 'DBIx::Squirrel::st' ) ) {
+                if ( $_[ 0 ]->isa( 'DBIx::Squirrel::st' ) ) {
                     shift->{ private_dbix_squirrel }{ sql };
+                } elsif ( $_[ 0 ]->isa( 'DBI::st' ) ) {
+                    shift->{ Statement };
                 } else {
                     throw 'Expected a statement handle';
                 }
