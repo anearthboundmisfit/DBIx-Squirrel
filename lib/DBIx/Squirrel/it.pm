@@ -19,8 +19,8 @@ use constant {
 };
 
 our $DEFAULT_SLICE    = [];
-our $DEFAULT_MAX_ROWS = 2;
-our $BUF_MULT         = 2;
+our $DEFAULT_MAX_ROWS = 10;
+our $BUF_MULTIPLIER   = 1;
 our $BUF_MAX_SIZE     = 64;
 
 my %itor;
@@ -124,7 +124,13 @@ sub _finish {
     $c->{ fi } = undef;
     $c->{ bu } = undef;
     $c->{ bx } = $DEFAULT_MAX_ROWS;
-    $c->{ bm } = ( $BUF_MULT >= 0 && $BUF_MULT < 9 ) ? $BUF_MULT : 0;
+    $c->{ bm } = do {
+        if ( $BUF_MULTIPLIER >= 0 && $BUF_MULTIPLIER < 11 ) {
+            $BUF_MULTIPLIER;
+        } else {
+            0;
+        }
+    };
     $c->{ bl } = ( $BUF_MAX_SIZE > 0 ) ? $BUF_MAX_SIZE : $c->{ bx };
     $c->{ rf } = 0;
     $c->{ rc } = 0;
