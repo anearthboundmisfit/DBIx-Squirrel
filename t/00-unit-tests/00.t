@@ -13,8 +13,6 @@ use DBIx::Squirrel;
 use lib realpath( "$FindBin::Bin/../lib" );
 use T::Database ':all';
 
-$| = 1;
-
 our (
     $sql, $sth, $res, $got, @got, $exp, @exp, $row, $dbh, $sth, $stdout,
     $stderr, @hashrefs, @arrayrefs, $standard_dbi_dbh, $standard_ekorn_dbh,
@@ -22,13 +20,13 @@ our (
 );
 
 print STDERR "\n";
-test_the_basics();
 
-# test_clone_connection( $_ ) foreach (
-#     [ $standard_dbi_dbh,   'standard DBI connection' ],
-#     [ $standard_ekorn_dbh, 'standard DBIx::Squirrel connection' ],
-#     [ $cached_ekorn_dbh,   'cached DBIx::Squirrel connection' ],
-# );
+test_the_basics();
+test_clone_connection( $_ ) foreach (
+    [ $standard_dbi_dbh,   'standard DBI connection' ],
+    [ $standard_ekorn_dbh, 'standard DBIx::Squirrel connection' ],
+    [ $cached_ekorn_dbh,   'cached DBIx::Squirrel connection' ],
+);
 
 ok 1, __FILE__ . ' complete';
 done_testing;
