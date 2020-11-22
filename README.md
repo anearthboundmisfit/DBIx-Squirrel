@@ -96,9 +96,9 @@ $row = $sth->find('B%');
 ## Description
 DBIx-Squirrel is a Perl 5 module for working with databases.
 
-DBIx-Squirrel is a DBI extension insomuch as it subclasses the popular DBI package (and other packages within that namespace), making minimalist enhancements onto its venerable ancestor's interface.
+DBIx-Squirrel is a DBI extension insomuch as it subclasses the popular DBI package (and other packages within that namespace), making minimalist enhancements to its venerable ancestor's interface.
 
-As someone who enjoys working with DBI (sometimes preferring it to heavyweight alternatives), I simply wanted to make some small improve the user experience, without those improvements seeming too alien in nature.
+As someone who enjoys working with DBI (sometimes preferring it to heavyweight alternatives), I simply wanted some small improve the user experience, without those improvements seeming too alien in nature.
 
 ### Design
 
@@ -107,7 +107,7 @@ A developer may confidently replace `use DBI` with `use DBIx::Squirrel` and expe
 
 DBIx-Squirrel's enhancements are designed to be low-friction, intuitive (and above all), elective. Things should work as expected, until our requirements change and any deviation from the norm is expected.
 
-In addition to a high degree of backward compatibility, interface-design has been forward-looking, too. Where some DBIx-Squirrel concepts have analogous in DBIx-Class, the same method names will implement analogous behaviours.
+In addition to a high degree of backward compatibility, interface-design has been forward-looking, too. Where some DBIx-Squirrel concepts have analogs within DBIx-Class, the same method names will implement analogous behaviours.
 
 #### Ease of use
 DBIx-Squirrel's baseline behaviour is _be like DBI_. There is no barrier to using this module if you are familiar with the DBI or DBI's extensive documentation.
