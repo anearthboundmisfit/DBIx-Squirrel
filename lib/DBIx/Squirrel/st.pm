@@ -25,8 +25,8 @@ sub execute {
     if ( @_ ) {
         $sth->bind( @_ );
     }
-    if ( $DBIx::Squirrel::FINISH_ACTIVE_ON_EXECUTE ) {
-        $sth->finish if $sth->{ Active };
+    if ( $sth->{ Active } && $DBIx::Squirrel::FINISH_ACTIVE_ON_EXECUTE ) {
+        $sth->finish;
     }
     return $sth->DBI::st::execute;
 }
