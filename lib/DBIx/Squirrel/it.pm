@@ -189,7 +189,23 @@ sub _get_row {
             shift @{ $c->{ bu } };
         }
     };
-    return $row;
+    return do {
+        if ( $row ) {
+            my $attr  = $c->{ st }{ private_dbix_squirrel };
+            my $class = $attr->{ bless_result };
+            if ( $class ) {
+                if ( $class = 1 ) {
+                    bless $row, 'DBIx::Squirrel::Result';
+                } else {
+                    bless $row, $class;
+                }
+            } else {
+                $row;
+            }
+        } else {
+            undef;
+        }
+    };
 }
 
 sub execute {

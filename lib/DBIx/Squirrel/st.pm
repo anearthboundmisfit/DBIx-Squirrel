@@ -20,6 +20,21 @@ use constant {
     E_UNK_PH     => 'Cannot bind unknown placeholder (%s)',
 };
 
+sub bless_result {
+    my $sth  = shift;
+    my $attr = $sth->{ private_dbix_squirrel };
+    if ( @_ ) {
+        if ( $_[ 0 ] ) {
+            $attr->{ bless_result } = shift;
+        } else {
+            undef $attr->{ bless_result };
+        }
+    } else {
+        $attr->{ bless_result } = 1;
+    }
+    return $sth;
+}
+
 sub execute {
     my $sth = shift;
     if ( @_ ) {
