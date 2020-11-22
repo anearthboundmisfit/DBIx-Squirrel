@@ -14,7 +14,7 @@ use lib realpath( "$FindBin::Bin/../lib" );
 use T::Database ':all';
 
 our (
-    $sql, $sth, $res, $got, @got, $exp, @exp, $row, $dbh, $sth, $stdout,
+    $sql, $sth, $res, $got, @got, $exp, @exp, $row, $dbh, $sth, $it, $stdout,
     $stderr, @hashrefs, @arrayrefs, $standard_dbi_dbh, $standard_ekorn_dbh,
     $cached_ekorn_dbh,
 );
@@ -22,6 +22,15 @@ our (
 print STDERR "\n";
 
 test_the_basics();
+
+$standard_dbi_dbh = DBI->connect( @T_DB_CONNECT_ARGS );
+
+$standard_ekorn_dbh = DBIx::Squirrel->connect( @T_DB_CONNECT_ARGS );
+isa_ok $standard_ekorn_dbh, 'DBIx::Squirrel::db';
+
+$cached_ekorn_dbh = DBIx::Squirrel->connect_cached( @T_DB_CONNECT_ARGS );
+isa_ok $cached_ekorn_dbh, 'DBIx::Squirrel::db';
+
 test_clone_connection( $_ ) foreach (
     [ $standard_dbi_dbh,   'standard DBI connection' ],
     [ $standard_ekorn_dbh, 'standard DBIx::Squirrel connection' ],
@@ -816,6 +825,134 @@ sub test_the_basics {
     );
     is_deeply $exp, $got, 'bind'
       or dump_val { exp => $exp, got => $got };
+
+    $sth = $standard_ekorn_dbh->prepare(
+        join ' ', (
+            'SELECT *',
+            'FROM media_types',
+            'WHERE Name = :name',
+        )
+    );
+ 
+    $it = $sth->iterate( name => 'AAC audio file' );
+    isa_ok $it, 'DBIx::Squirrel::it';
+
+    ( $exp, $got ) = (
+        bless( {
+                MaxRows => 10,
+                Slice   => [],
+            },
+            'DBIx::Squirrel::it'
+        ),
+        $it,
+    );
+    is_deeply $exp, $got, 'iterate'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = ( {
+            itor   => $it,
+            params => {
+                1 => ":name",
+            },
+            sql => "SELECT * FROM media_types WHERE Name = :name",
+            std => "SELECT * FROM media_types WHERE Name = ?",
+        },
+        $sth->{ private_dbix_squirrel },
+    );
+    is_deeply $exp, $got, 'iterate'
+      or dump_val { exp => $exp, got => $got };
+
+    $sth = $standard_ekorn_dbh->prepare(
+        join ' ', (
+            'SELECT *',
+            'FROM media_types',
+        )
+    );
+
+    $it = $sth->iterate;
+
+    ( $exp, $got ) = (
+        [ 1, 'MPEG audio file' ],
+        $it->single,
+    );
+    is_deeply $exp, $got, 'single'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        [ 1, 'MPEG audio file' ],
+        $it->first,
+    );
+    is_deeply $exp, $got, 'first'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        { MediaTypeId => 1, Name => "MPEG audio file" },
+        do {
+            $it->reset( {} );
+            $it->first;
+        },
+    );
+    is_deeply $exp, $got, 'first'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        { MediaTypeId => 1, Name => "MPEG audio file" },
+        $it->first( {} ),
+    );
+    is_deeply $exp, $got, 'first'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        {    MediaTypeId => 2,    Name => "Protected AAC audio file"},
+        $it->next,
+    );
+    is_deeply $exp, $got, 'next'
+      or dump_val { exp => $exp, got => $got };
+
+    $sth->finish;
+
+    $sth = $standard_ekorn_dbh->prepare(
+        join ' ', (
+            'SELECT *',
+            'FROM media_types',
+            'WHERE MediaTypeId = :id',
+        )
+    );
+
+    $it = $sth->iterate( id => 1 );
+
+    ( $exp, $got ) = (
+        [ 1, 'MPEG audio file' ],
+        $it->single,
+    );
+    is_deeply $exp, $got, 'single'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        [ 5, 'AAC audio file' ],
+        $it->single( id => 5 ),
+    );
+    is_deeply $exp, $got, 'single'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        [ 1, 'MPEG audio file' ],
+        $it->single,
+    );
+    is_deeply $exp, $got, 'single'
+      or dump_val { exp => $exp, got => $got };
+
+    # ( $exp, $got ) = (
+    #     [ 5, 'AAC audio file' ],
+    #     $it->find( id => 5 ),
+    # );
+    # is_deeply $exp, $got, 'find'
+    #   or dump_val { exp => $exp, got => $got };
+
+    # $sth->finish;
+
+    $standard_ekorn_dbh->disconnect;
+    $standard_dbi_dbh->disconnect;
 
     return;
 }
