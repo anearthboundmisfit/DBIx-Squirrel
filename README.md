@@ -13,7 +13,7 @@ $db1 = DBI->connect($dsn, $user, $pass, \%attr);
 $dbh = DBIx::Squirrel->connect($db1);
 $dbh = DBIx::Squirrel->connect($dsn, $user, $pass, \%attr);
 
-$st1 = $dbi->prepare('SELECT * FROM product WHERE id = ?');
+$st1 = $db1->prepare('SELECT * FROM product WHERE id = ?');
 $sth = $dbh->prepare($st1);
 $sth->bind_param(1, '1001099');
 $sth->bind( '1001099' );
