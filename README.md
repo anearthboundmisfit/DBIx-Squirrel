@@ -9,88 +9,107 @@ A module for working with databases.
 ``` perl
 use DBIx::Squirrel;
 
-# Connect as you would with DBI
-$dbh1 = DBIx::Squirrel->connect($dsn, $user, $pass, \%attr);
+$db1 = DBI->connect($dsn, $user, $pass, \%attr);
+$dbh = DBIx::Squirrel->connect($db1);
+$dbh = DBIx::Squirrel->connect($dsn, $user, $pass, \%attr);
 
-# Connect to and clone database handles (even standard DBI::db
-# handles)
-$dbh1 = DBI->connect($dsn, $user, $pass, \%attr);
-$dbh  = DBIx::Squirrel->connect($dbh);
-
-# Prepare statements the old-fashioned way using standard
-# placeholders
-$sth1 = $dbh->prepare(<< ';;');
-    SELECT * FROM table WHERE column_1 = ? AND column_2 = ?
-;;
-
-# Prepare clones of previously prepared statements
-$sth = $dbh->prepare( $sth1 );
-$sth = $sth1->prepare;
-$sth = $sth1->clone;
-
-# Bind values the old-fashioned way
-$sth->bind_param( 1, 'value_1' );
-$sth->bind_param( 2, 'value_2' );
-
-# Bind value lists the easy way
-$sth->bind( 'value_1', 'value_2' );
-
-# Oh, and enclosing value lists as array refs is okay, too 
-$sth->bind([ 'value_1', 'value_2' ]);
-
-# Execute
+$st1 = $dbi->prepare('SELECT * FROM product WHERE id = ?');
+$sth = $dbh->prepare($st1);
+$sth->bind_param(1, '1001099');
+$sth->bind( '1001099' );
+$sth->bind(['1001099']);
 $res = $sth->execute;
+$res = $sth->execute( '1001099' );
+$res = $sth->execute(['1001099']);
+$itr = $sth->iterate( '1001099' );
+$itr = $sth->iterate(['1001099']);
 
-# Use SQLite ?n-style placeholders
-$sth = $dbh->prepare(<< ';;');
-    SELECT * FROM table WHERE column_1 = ?1 AND column_2 = ?2
-;;
+$sth = $dbh->prepare('SELECT * FROM product WHERE id = ?');
+$sth->bind_param(1, '1001099');
+$sth->bind( '1001099' );
+$sth->bind(['1001099']);
+$res = $sth->execute;
+$res = $sth->execute( '1001099' );
+$res = $sth->execute(['1001099']);
+$itr = $sth->iterate( '1001099' );
+$itr = $sth->iterate(['1001099']);
 
-# Or PostgreSQL $1-style or :1-style placeholders 
-$sth = $dbh->prepare(<< ';;');
-    SELECT * FROM table WHERE column_1 = $1 AND column_2 = $2
-;;
-$sth = $dbh->prepare(<< ';;');
-    SELECT * FROM table WHERE column_1 = :1 AND column_2 = :2
-;;
+$sth = $dbh->prepare('SELECT * FROM product WHERE id = ?1');
+$sth->bind_param(1, '1001099');
+$sth->bind( '1001099' );
+$sth->bind(['1001099']);
+$res = $sth->execute;
+$res = $sth->execute( '1001099' );
+$res = $sth->execute(['1001099']);
+$itr = $sth->iterate( '1001099' );
+$itr = $sth->iterate(['1001099']);
 
-# Or PostgreSQL / Oracle :name-style placeholders
-$sth = $dbh->prepare(<< ';;');
-    SELECT * FROM table WHERE column_1 = :v1 AND column_2 = :v2
-;;
+$sth = $dbh->prepare('SELECT * FROM product WHERE id = $1');
+$sth->bind_param(1, '1001099');
+$sth->bind( '1001099' );
+$sth->bind(['1001099']);
+$res = $sth->execute;
+$res = $sth->execute( '1001099' );
+$res = $sth->execute(['1001099']);
+$itr = $sth->iterate( '1001099' );
+$itr = $sth->iterate(['1001099']);
 
-# Sensible and simple value-binding
-$res = $sth->execute( v1=>'value_1', v2=>'value_2' );
-$res = $sth->execute( ':v1'=>'value_1', ':v2'=>'value_2' );
-$res = $sth->execute([ v1=>'value_1', v2=>'value_2' ]);
-$res = $sth->execute([ ':v1'=>'value_1', ':v2'=>'value_2' ]);
-$res = $sth->execute({ v1=>'value_1', v2=>'value_2' });
-$res = $sth->execute({ ':v1'=>'value_1', ':v2'=>'value_2' });
+$sth = $dbh->prepare('SELECT * FROM product WHERE id = :1');
+$sth->bind_param(1, '1001099');
+$sth->bind( '1001099' );
+$sth->bind(['1001099']);
+$res = $sth->execute;
+$res = $sth->execute( '1001099' );
+$res = $sth->execute(['1001099']);
+$itr = $sth->iterate( '1001099' );
+$itr = $sth->iterate(['1001099']);
 
-# Effortless iterators (no execute required here)
-$sth = $dbh->prepare( 'SELECT * FROM table' );
-while ( $row = $sth->next ) {
-  print Dumper($row);
+$sth = $dbh->prepare('SELECT * FROM product WHERE id = :id');
+$sth->bind_param(':id', '1001099');
+$res = $sth->bind( ':id', '1001099' );
+$res = $sth->bind([':id', '1001099']);
+$res = $sth->bind({':id', '1001099'});
+$res = $sth->bind( id=>'1001099' );
+$res = $sth->bind([id=>'1001099']);
+$res = $sth->bind({id=>'1001099'});
+$res = $sth->execute;
+$res = $sth->execute( id=>'1001099' );
+$res = $sth->execute([id=>'1001099']);
+$res = $sth->execute({id=>'1001099'});
+$itr = $sth->iterate( id=>'1001099' );
+$itr = $sth->iterate([id=>'1001099']);
+$itr = $sth->iterate({id=>'1001099'});
+
+@ary = ();
+while ($next = $itr->next) {
+  push @ary, $next;
 }
 
-# Reset iterators (and change row disposition)
-$sth = $sth->reset;
-$sth = $sth->reset({});
-$sth = $sth->reset([]);
+@ary = $itr->first;
+while ($next = $itr->next) {
+  push @ary, $next;
+}
 
-# Easily access single, first, remaining and all rows
-$row = $sth->single;
-$row = $sth->first;
-@ary = $sth->remaining;
-@ary = $sth->all;
+@ary = $itr->first;
+push @ary, $itr->remaining;
 
-# Use single, find and all to temporarily override bind-values
-$row = $sth->single('B%');
-$row = $sth->find('B%');
-@ary = $sth->all('B%');
+@ary = $itr->all;
 
-# Rule of thumb for anything not covered -- if it hasn't had a
-# face-lift then it works the same way as it does for DBI!
+$itr = $itr->reset;     # Repositions iterator at the start
+$itr = $itr->reset({}); # Fetch rows as hashrefs
+$itr = $itr->reset([]); # Fetch rows as arrayrefs
+
+$row = $itr->single;
+$row = $itr->single( id=>'1001100' );
+$row = $itr->single([id=>'1001100']);
+$row = $itr->single({id=>'1001100'});
+$row = $itr->find( id=>'1001100' );
+$row = $itr->find([id=>'1001100']);
+$row = $itr->find({id=>'1001100'});
+
+# Iterator methods may also be applied directly to statement objects,
+# and will automatically execute the statements if execution is
+# required.
 ```
 
 ## Description
