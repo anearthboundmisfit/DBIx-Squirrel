@@ -132,6 +132,10 @@ sub prepare {
     return $dbh->prepare( $sth->{ Statement }, @_ );
 }
 
+sub resultset {
+    return bless( shift->iterate( @_ ), 'DBIx::Squirrel::ResultSet' );
+}
+
 sub iterate {
     my $sth     = shift;
     my $private = $sth->{ private_dbix_squirrel };
@@ -179,6 +183,7 @@ sub iterator {
 
 BEGIN {
     *it    = *iterate;
+    *rs    = *resultset;
     *itor  = *iterator;
     *reit  = *reiterate;
     *clone = *prepare;

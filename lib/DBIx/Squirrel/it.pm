@@ -311,9 +311,10 @@ sub find {
 sub all {
     my $self = shift;
     $_ = do {
+        my @cb  = pop if ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE';
         my $res = do {
             if ( $self->execute( @_ ) ) {
-                $self->remaining;
+                $self->remaining( @cb );
             } else {
                 [];
             }
@@ -327,11 +328,18 @@ sub all {
 sub remaining {
     my ( $c, $self ) = shift->_context;
     $_ = do {
+        my @cb = pop if ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE';
         if ( $c->{ fi } || ( !$c->{ ex } && !$self->execute ) ) {
             undef;
         } else {
             while ( $self->_charge_buffer ) { ; }
-            my $rows = $c->{ bu };
+            my $rows = do {
+                if ( @cb ) {
+                    [ map { $cb[ 0 ]->( $_ ) } @{ $c->{ bu } } ]
+                } else {
+                    $c->{ bu };
+                }
+            };
             $c->{ rc } = $c->{ rf };
             $c->{ bu } = undef;
             $self->reset;

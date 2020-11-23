@@ -14,7 +14,7 @@ use lib realpath( "$FindBin::Bin/../lib" );
 use T::Database ':all';
 
 our (
-    $sql, $sth, $res, $got, @got, $exp, @exp, $row, $dbh, $it, $stdout,
+    $sql, $sth, $res, $got, @got, $exp, @exp, $row, $dbh, $it, $stdout, $rs,
     $stderr, @hashrefs, @arrayrefs, $standard_dbi_dbh, $standard_ekorn_dbh,
     $cached_ekorn_dbh,
 );
@@ -932,6 +932,18 @@ sub test_the_basics {
     );
     is_deeply $exp, $got, 'single'
       or dump_val { exp => $exp, got => $got };
+
+    $sth = $standard_ekorn_dbh->prepare(
+        join ' ', (
+            'SELECT *',
+            'FROM media_types',
+            'WHERE MediaTypeId = :id',
+        )
+    );
+
+    $rs = $sth->rs( id => 1 );
+    diag_val $rs;
+    diag_val scalar $rs->remaining;
 
     # ( $exp, $got ) = (
     #     [ 5, 'AAC audio file' ],
