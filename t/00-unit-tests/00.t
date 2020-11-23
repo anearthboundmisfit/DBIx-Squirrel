@@ -819,7 +819,7 @@ sub test_the_basics {
             'WHERE Name = :name',
         )
     );
- 
+
     $it = $sth->iterate( name => 'AAC audio file' );
     isa_ok $it, 'DBIx::Squirrel::it';
 
@@ -894,7 +894,7 @@ sub test_the_basics {
       or dump_val { exp => $exp, got => $got };
 
     ( $exp, $got ) = (
-        {    MediaTypeId => 2,    Name => "Protected AAC audio file"},
+        { MediaTypeId => 2, Name => "Protected AAC audio file" },
         $it->next,
     );
     is_deeply $exp, $got, 'next'
@@ -933,26 +933,142 @@ sub test_the_basics {
     is_deeply $exp, $got, 'single'
       or dump_val { exp => $exp, got => $got };
 
-    $sth = $standard_ekorn_dbh->prepare(
+    my $sth = $standard_ekorn_dbh->prepare(
         join ' ', (
             'SELECT *',
             'FROM media_types',
-            'WHERE MediaTypeId = :id',
         )
     );
 
-    $rs = $sth->rs( id => 1 );
-    diag_val $rs;
-    diag_val scalar $rs->remaining;
+    ( $exp, $got ) = (
+        bless( { MaxRows => 10, Slice => {} }, 'DBIx::Squirrel::ResultSet' ),
+        do {
+            my $sth = $standard_ekorn_dbh->prepare(
+                join ' ', (
+                    'SELECT *',
+                    'FROM media_types',
+                )
+            )->reset( {} );
+            $sth->result_set;
+        },
+    );
+    is_deeply $exp, $got, 'result_set'
+      or dump_val { exp => $exp, got => $got };
 
-    # ( $exp, $got ) = (
-    #     [ 5, 'AAC audio file' ],
-    #     $it->find( id => 5 ),
-    # );
-    # is_deeply $exp, $got, 'find'
-    #   or dump_val { exp => $exp, got => $got };
+    ( $exp, $got ) = (
+        bless( { MaxRows => 10, Slice => {} }, 'DBIx::Squirrel::ResultSet' ),
+        do {
+            my $sth = $standard_ekorn_dbh->prepare(
+                join ' ', (
+                    'SELECT *',
+                    'FROM media_types',
+                )
+            );
+            $sth->result_set->reset( {} );
+        },
+    );
+    is_deeply $exp, $got, 'result_set'
+      or dump_val { exp => $exp, got => $got };
 
-    # $sth->finish;
+    ( $exp, $got ) = (
+        bless( { MaxRows => 10, Slice => [] }, 'DBIx::Squirrel::ResultSet' ),
+        do {
+            my $sth = $standard_ekorn_dbh->prepare(
+                join ' ', (
+                    'SELECT *',
+                    'FROM media_types',
+                )
+            )->reset( [] );
+            $sth->result_set;
+        },
+    );
+    is_deeply $exp, $got, 'result_set'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        bless( { MaxRows => 10, Slice => [] }, 'DBIx::Squirrel::ResultSet' ),
+        do {
+            my $sth = $standard_ekorn_dbh->prepare(
+                join ' ', (
+                    'SELECT *',
+                    'FROM media_types',
+                )
+            );
+            $sth->result_set->reset( [] );
+        },
+    );
+    is_deeply $exp, $got, 'result_set'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        bless( { MaxRows => 10, Slice => [] }, 'DBIx::Squirrel::ResultSet' ),
+        do {
+            $sth->result_set;
+        },
+    );
+    is_deeply $exp, $got, 'result_set'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        bless( [ 1, "MPEG audio file" ], 'DBIx::Squirrel::Result' ),
+        do {
+            $sth->result_set->first;
+        },
+    );
+    is_deeply $exp, $got, 'first'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = ( [
+            bless( [
+                    1,
+                    "MPEG audio file",
+                ],
+                'DBIx::Squirrel::Result'
+            ),
+            bless( [
+                    2,
+                    "Protected AAC audio file",
+                ],
+                'DBIx::Squirrel::Result'
+            ),
+            bless( [
+                    3,
+                    "Protected MPEG-4 video file",
+                ],
+                'DBIx::Squirrel::Result'
+            ),
+            bless( [
+                    4,
+                    "Purchased AAC audio file",
+                ],
+                'DBIx::Squirrel::Result'
+            ),
+            bless( [
+                    5,
+                    "AAC audio file",
+                ],
+                'DBIx::Squirrel::Result'
+            ),
+        ],
+        ,
+        do {
+            [ $sth->result_set->all ];
+        },
+    );
+    is_deeply $exp, $got, 'all'
+      or dump_val { exp => $exp, got => $got };
+
+    ( $exp, $got ) = (
+        5,
+        do {
+            my $rs = $sth->result_set;
+            $rs->count;
+        },
+    );
+    is_deeply $exp, $got, 'count'
+      or dump_val { exp => $exp, got => $got };
+
+    $sth->finish;
 
     $standard_ekorn_dbh->disconnect;
     $standard_dbi_dbh->disconnect;
