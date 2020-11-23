@@ -129,7 +129,7 @@ In addition to a high degree of backward compatibility, interface-design has als
 #### Ease of use
 DBIx-Squirrel's baseline behaviour is _be like DBI_. There is no barrier to using this module if you are familiar with the DBI, or its extensive documentation.
 
-Pretty much all of DBIx-Squirrel's enhancements are progressive or additive in nature. For most experienced DBI (or DBIx-Class) developers, a cursory glance at the synopsis should be enough to get them started.
+Pretty much all of DBIx-Squirrel's enhancements are progressive or additive in nature. For most experienced DBI and DBIx-Class developers, a cursory glance at the synopsis should be enough to get started.
 
 ### Features
 
