@@ -111,9 +111,9 @@ $row = $itr->find({id=>'1001100'});
 ```
 
 ## Description
-DBIx-Squirrel is a Perl 5 module for working with databases.
+Just what the world needs, another for working with databases.
 
-DBIx-Squirrel is a DBI extension insomuch as it subclasses the popular DBI package (and other packages within that namespace), making minimalist enhancements to its venerable ancestor's interface.
+DBIx-Squirrel is a DBI extension. It subclasses the venerable DBI package (and other packages within that namespace), making a few enhancements to its ancestor's interface.
 
 As someone who enjoys working with DBI (sometimes preferring it to heavyweight alternatives), I simply wanted a few small improvements to the user experience, without those improvements seeming too alien in nature.
 
