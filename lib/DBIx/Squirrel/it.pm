@@ -298,14 +298,22 @@ sub single {
 sub find {
     my $self = shift;
     $_ = do {
-        my @cb = pop if ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE';
-        if ( my $row_count = $self->execute( @_ ) ) {
-            $self->_get_row( @cb );
-        } else {
-            undef;
-        }
+        my $res = do {
+            my @cb = pop if ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE';
+            if ( my $row_count = $self->execute( @_ ) ) {
+                $self->_get_row( @cb );
+            } else {
+                undef;
+            }
+        };
+        $self->reset;
+        $res;
     };
     return $_;
+}
+
+sub count {
+    return scalar @{ scalar shift->all( @_ ) };
 }
 
 sub all {
@@ -379,6 +387,10 @@ sub reiterate {
     shift->sth->reiterate( @_ );
 }
 
+sub result_set {
+    shift->sth->result_set( @_ );
+}
+
 sub sth {
     shift->_context->{ st };
 }
@@ -399,18 +411,12 @@ sub not_done {
     not shift->_context->{ fi };
 }
 
-sub row_count {
-    shift->_context->{ rc };
-}
-
-sub rows_fetched {
-    shift->_context->{ rf };
-}
-
 BEGIN {
-    *reit    = *reiterate;
-    *iterate = *reiterate;
-    *it      = *reiterate;
+    *resultset = *result_set;
+    *rs        = *result_set;
+    *reit      = *reiterate;
+    *iterate   = *reiterate;
+    *it        = *reiterate;
 }
 
 ## use critic
