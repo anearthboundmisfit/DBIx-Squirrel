@@ -140,8 +140,9 @@ sub _finish {
 sub first {
     my ( $c, $self ) = shift->_context;
     $_ = do {
+        my @cb = pop if ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE';
         $self->reset( @_ );
-        $self->_get_row;
+        $self->_get_row( @cb );
     };
     return $_;
 }
@@ -192,14 +193,8 @@ sub _get_row {
     };
     return do {
         if ( $row ) {
-            my $attr  = $c->{ st }{ private_dbix_squirrel };
-            my $class = $attr->{ bless_result };
-            if ( $class ) {
-                if ( $class = 1 ) {
-                    bless $row, 'DBIx::Squirrel::Result';
-                } else {
-                    bless $row, $class;
-                }
+            if ( ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE' ) {
+                $row = pop->( $row );
             } else {
                 $row;
             }
@@ -283,12 +278,13 @@ sub _buffer_empty {
 sub single {
     my $self = shift;
     $_ = do {
+        my @cb  = pop if ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE';
         my $res = do {
             if ( my $row_count = $self->execute( @_ ) ) {
                 if ( $row_count > 1 ) {
                     whine 'Query returned more than one row';
                 }
-                $self->_get_row;
+                $self->_get_row( @cb );
             } else {
                 undef;
             }
@@ -302,8 +298,9 @@ sub single {
 sub find {
     my $self = shift;
     $_ = do {
+        my @cb = pop if ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE';
         if ( my $row_count = $self->execute( @_ ) ) {
-            $self->_get_row;
+            $self->_get_row( @cb );
         } else {
             undef;
         }
@@ -347,6 +344,7 @@ sub remaining {
 sub next {
     my $self = shift;
     $_ = do {
+        my @cb = pop if ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE';
         if ( @_ ) {
             if ( ref $_[ 0 ] ) {
                 $self->_set_slice( shift );
@@ -364,7 +362,7 @@ sub next {
                 }
             }
         }
-        $self->_get_row;
+        $self->_get_row( @cb );
     };
     return $_;
 }
