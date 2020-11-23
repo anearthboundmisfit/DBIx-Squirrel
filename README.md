@@ -86,9 +86,7 @@ while ($next = $itr->next) {
 }
 
 @ary = $itr->first;
-while ($next = $itr->next) {
-  push @ary, $next;
-}
+push @ary, $_ while $itr->next;
 
 @ary = $itr->first;
 push @ary, $itr->remaining;
