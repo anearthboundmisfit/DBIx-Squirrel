@@ -10,6 +10,7 @@ BEGIN {
 }
 
 use namespace::autoclean;
+use DBIx::Squirrel::ResultSet;
 use DBIx::Squirrel::util 'throw', 'whine', 'Dumper';
 use Scalar::Util 'blessed', 'reftype';
 
