@@ -102,29 +102,40 @@ sub prepare_cached {
 sub do {
     my $dbh       = shift;
     my $statement = shift;
-    my $res       = do {
-        if ( @_ ) {
-            if ( ref $_[ 0 ] ) {
-                if ( reftype( $_[ 0 ] ) eq 'HASH' ) {
-                    $dbh->prepare( $statement, shift )->execute( @_ );
-                } elsif ( reftype( $_[ 0 ] ) eq 'ARRAY' ) {
-                    $dbh->prepare( $statement )->execute( @_ );
-                } else {
-                    throw 'Expected a reference to a HASH or ARRAY';
+    my ( $res, $sth );
+    if ( @_ ) {
+        if ( ref $_[ 0 ] ) {
+            if ( reftype( $_[ 0 ] ) eq 'HASH' ) {
+                if ( $sth = $dbh->prepare( $statement, shift ) ) {
+                    $res = $sth->execute( @_ );
+                }
+            } elsif ( reftype( $_[ 0 ] ) eq 'ARRAY' ) {
+                if ( $sth = $dbh->prepare( $statement ) ) {
+                    $res = $sth->execute( @_ );
                 }
             } else {
-                if ( defined $_[ 0 ] ) {
-                    $dbh->prepare( $statement )->execute( @_ );
-                } else {
-                    $dbh->prepare( $statement, shift )->execute( @_ );
-                }
+                throw 'Expected a reference to a HASH or ARRAY';
             }
         } else {
-            $dbh->prepare( $statement )->execute;
+            if ( defined $_[ 0 ] ) {
+                if ( $sth = $dbh->prepare( $statement ) ) {
+                    $res = $sth->execute( @_ );
+                }
+            } else {
+                if ( $sth = $dbh->prepare( $statement, shift ) ) {
+                    $res = $sth->execute( @_ );
+                }
+            }
         }
-    };
-    return $res;
+    } else {
+        if ( $sth = $dbh->prepare( $statement ) ) {
+            $res = $sth->execute;
+        }
+    }
+    return wantarray ? ( $res, $sth ) : $res;
 }
+
+
 
 sub iterate {
     my $dbh       = shift;
