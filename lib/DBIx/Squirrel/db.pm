@@ -135,9 +135,79 @@ sub do {
     return wantarray ? ( $res, $sth ) : $res;
 }
 
-sub iterate { shift->prepare( shift )->iterate( @_ ) }
+sub iterate {
+    my $dbh       = shift;
+    my $statement = shift;
+    my $itor      = do {
+        if ( @_ ) {
+            if ( ref $_[ 0 ] ) {
+                if ( reftype( $_[ 0 ] ) eq 'HASH' ) {
+                    if ( my $sth = $dbh->prepare( $statement, shift ) ) {
+                        $sth->iterate( @_ );
+                    }
+                } elsif ( reftype( $_[ 0 ] ) eq 'ARRAY' ) {
+                    if ( my $sth = $dbh->prepare( $statement ) ) {
+                        $sth->iterate( @_ );
+                    }
+                } else {
+                    throw 'Expected a reference to a HASH or ARRAY';
+                }
+            } else {
+                if ( defined $_[ 0 ] ) {
+                    if ( my $sth = $dbh->prepare( $statement ) ) {
+                        $sth->iterate( @_ );
+                    }
+                } else {
+                    if ( my $sth = $dbh->prepare( $statement, shift ) ) {
+                        $sth->iterate( @_ );
+                    }
+                }
+            }
+        } else {
+            if ( my $sth = $dbh->prepare( $statement ) ) {
+                $sth->iterate;
+            }
+        }
+    };
+    return $itor;
+}
 
-sub resultset { shift->prepare( shift )->resultset( @_ ) }
+sub resultset {
+    my $dbh       = shift;
+    my $statement = shift;
+    my $rs= do {
+        if ( @_ ) {
+            if ( ref $_[ 0 ] ) {
+                if ( reftype( $_[ 0 ] ) eq 'HASH' ) {
+                    if ( my $sth = $dbh->prepare( $statement, shift ) ) {
+                        $sth->resultset( @_ );
+                    }
+                } elsif ( reftype( $_[ 0 ] ) eq 'ARRAY' ) {
+                    if ( my $sth = $dbh->prepare( $statement ) ) {
+                        $sth->resultset( @_ );
+                    }
+                } else {
+                    throw 'Expected a reference to a HASH or ARRAY';
+                }
+            } else {
+                if ( defined $_[ 0 ] ) {
+                    if ( my $sth = $dbh->prepare( $statement ) ) {
+                        $sth->resultset( @_ );
+                    }
+                } else {
+                    if ( my $sth = $dbh->prepare( $statement, shift ) ) {
+                        $sth->resultset( @_ );
+                    }
+                }
+            }
+        } else {
+            if ( my $sth = $dbh->prepare( $statement ) ) {
+                $sth->resultset;
+            }
+        }
+    };
+    return $rs;
+}
 
 BEGIN {
     *it = *iterate;
