@@ -388,8 +388,8 @@ sub reiterate {
     shift->sth->reiterate( @_ );
 }
 
-sub result_set {
-    shift->sth->result_set( @_ );
+sub resultset {
+    shift->sth->resultset( @_ );
 }
 
 sub sth {
@@ -413,8 +413,8 @@ sub not_done {
 }
 
 BEGIN {
-    *resultset = *result_set;
-    *rs        = *result_set;
+    *resultset = *resultset;
+    *rs        = *resultset;
     *reit      = *reiterate;
     *iterate   = *reiterate;
     *it        = *reiterate;

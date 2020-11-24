@@ -174,7 +174,7 @@ sub prepare {
     return $dbh->prepare( $sth->{ Statement }, @_ );
 }
 
-sub result_set {
+sub resultset {
     return bless( shift->iterate( @_ ), 'DBIx::Squirrel::ResultSet' );
 }
 
@@ -227,12 +227,11 @@ sub iterator {
 }
 
 BEGIN {
-    *resultset = *result_set;
-    *rs        = *result_set;
-    *it        = *iterate;
-    *itor      = *iterator;
-    *reit      = *reiterate;
-    *clone     = *prepare;
+    *itor  = *iterator;
+    *it    = *iterate;
+    *rs    = *resultset;
+    *reit  = *reiterate;
+    *clone = *prepare;
 }
 
 ## use critic
