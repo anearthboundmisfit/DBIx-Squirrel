@@ -105,9 +105,15 @@ $row = $itr->find( id=>'1001100' );
 $row = $itr->find([id=>'1001100']);
 $row = $itr->find({id=>'1001100'});
 
-# Iterator methods may also be applied directly to statement objects,
-# and will automatically execute the statements if execution is
-# required.
+# Result sets are just fancy iterators that "bless" results. This
+# will allow use to use accessors to get at column values without
+# being having to worry whether results are arrayrefs or hashrefs
+#
+$sth = $dbh->prepare('SELECT MediaTypeId, Name FROM media_types');
+$res = $sth->result_set;
+while ($res->next) {
+  print $_->Name, "\n";
+}
 ```
 
 ## Description

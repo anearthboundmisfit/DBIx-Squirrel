@@ -1073,6 +1073,14 @@ sub test_the_basics {
 
     $sth->finish;
 
+$sth = $standard_ekorn_dbh->prepare(<<';');
+  SELECT MediaTypeId, Name FROM media_types
+;
+$rs = $sth->result_set;
+while ($rs->next) {
+  print $_->Name, "\n";
+}
+
     $standard_ekorn_dbh->disconnect;
     $standard_dbi_dbh->disconnect;
 
