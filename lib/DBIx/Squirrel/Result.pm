@@ -11,7 +11,7 @@ BEGIN {
 
 use namespace::autoclean;
 use Scalar::Util 'reftype';
-use Sub::Util 'set_subname';
+use Sub::Name 'subname';
 use DBIx::Squirrel::util 'throw';
 
 our $AUTOLOAD;
@@ -49,7 +49,7 @@ sub AUTOLOAD {
     if ( $closure ) {
         no strict 'refs';
         my $symbol = $class . '::' . $name;
-        *{ $symbol } = set_subname( $symbol, $closure );
+        *{ $symbol } = subname( $symbol, $closure );
     } else {
         throw 'Unrecognised column name (%s)', $name;
     }

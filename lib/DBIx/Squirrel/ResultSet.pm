@@ -12,16 +12,19 @@ BEGIN {
 
 use namespace::autoclean;
 use Scalar::Util 'reftype', 'weaken';
+use Sub::Name 'subname';
 use DBIx::Squirrel::Result;
 
 sub DESTROY {
     return if ${^GLOBAL_PHASE} eq 'DESTRUCT';
     no strict 'refs';
-    no warnings 'redefine';
     local ( $., $@, $!, $^E, $?, $_ );
     my ( $id, $self ) = shift->_id;
     my $class = ref( $self ) . '_' . sprintf( '0x%x', $id ) . '::Result';
-    *{ $class . '::_rs' } = sub { undef };
+    do {
+        no warnings;
+        *{ $class . '::_rs' } = subname( $class . '::_rs', sub { undef } );
+    };
     return $self->SUPER::DESTROY;
 }
 
@@ -38,8 +41,9 @@ sub _bless_row {
     my $class = ref( $self ) . '_' . sprintf( '0x%x', $id ) . '::Result';
     my $row   = bless( shift, $class );
     unless ( defined &{ $class . '::_rs' } && $class->_rs ) {
+        no warnings;
         @{ $class . '::ISA' } = ( 'DBIx::Squirrel::Result' );
-        *{ $class . '::_rs' } = sub { $self };
+        *{ $class . '::_rs' } = subname( $class . '::_rs', sub { $self } );
     }
     return $row;
 }
