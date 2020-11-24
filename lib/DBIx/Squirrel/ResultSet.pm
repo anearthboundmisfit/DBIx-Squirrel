@@ -21,7 +21,7 @@ sub DESTROY {
     my ( $id, $self ) = shift->_id;
     my $class = $self->result_class;
     no strict 'refs';
-    undef &{ "$class\::_rs" };
+    undef &{ "$class\::resultset" };
     return $self->SUPER::DESTROY;
 }
 
@@ -39,13 +39,15 @@ sub _bless_row {
     my $row  = do {
         if ( ref $_[ 0 ] ) {
             my $class = $self->result_class;
-            unless ( defined &{ $class . '::_rs' } ) {
+            unless ( defined &{ $class . '::resultset' } ) {
                 no strict 'refs';
-                undef &{ "$class\::_rs" };
-                *{ "$class\::_rs" } = do {
+                undef &{ "$class\::resultset" };
+                *{ "$class\::resultset" } = do {
                     weaken( my $rs = $self );
-                    subname( "$class\::_rs", sub { $rs } );
+                    subname( "$class\::resultset", sub { $rs } );
                 };
+                undef &{ "$class\::rs" };
+                *{ "$class\::rs" }  = *{ "$class\::resultset" };
                 @{ "$class\::ISA" } = (
                     'DBIx::Squirrel::ResultSet::Result',
                 );

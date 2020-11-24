@@ -24,7 +24,7 @@ sub AUTOLOAD {
     my $class   = ref $self;
     my $closure = do {
         if ( reftype( $self ) eq 'ARRAY' ) {
-            my $sth   = $self->_rs->sth;
+            my $sth   = $self->resultset->sth;
             my $index = $sth->{ NAME_lc_hash }{ lc $name };
             if ( defined $index ) {
                 sub { shift->[ $index ] };
@@ -48,7 +48,7 @@ sub AUTOLOAD {
     };
     if ( $closure ) {
         no strict 'refs';
-        my $symbol = $class . '::' . $name;
+        my $symbol = "$class\::$name";
         *{ $symbol } = subname( $symbol, $closure );
     } else {
         throw 'Unrecognised column name (%s)', $name;
