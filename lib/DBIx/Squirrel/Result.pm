@@ -11,14 +11,15 @@ BEGIN {
 
 use namespace::autoclean;
 use Scalar::Util 'reftype';
+use Sub::Util 'set_subname';
 use DBIx::Squirrel::util 'throw';
 
 our $AUTOLOAD;
 
 sub AUTOLOAD {
-    local ( $_ );
     ( my $name = $AUTOLOAD ) =~ s/.*:://;
     return if $name eq 'DESTROY';
+    local ( $_ );
     my $self    = $_[ 0 ];
     my $class   = ref $self;
     my $closure = do {
@@ -47,13 +48,13 @@ sub AUTOLOAD {
     };
     if ( $closure ) {
         no strict 'refs';
-        *{ $class . '::' . $name } = $closure;
+        my $symbol = $class . '::' . $name;
+        *{ $symbol } = set_subname( $symbol, $closure );
     } else {
         throw 'Unrecognised column name (%s)', $name;
     }
     goto &{ $closure };
 }
-
 
 ## use critic
 
