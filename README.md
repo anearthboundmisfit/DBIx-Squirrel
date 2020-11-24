@@ -2,7 +2,7 @@
 
 # DBIx-Squirrel
 
-A module for working with databases.
+A Perl 5 module for working with databases.
 
 ### Synopsis
 
@@ -117,7 +117,7 @@ while ($res->next) {
 ```
 
 ## Description
-Just what the world needs, another for working with databases.
+Just what the world needs, another Perl module for working with databases.
 
 DBIx-Squirrel is a DBI extension. It subclasses the venerable DBI package (and other packages within that namespace), making a few enhancements to its ancestor's interface.
 
