@@ -20,6 +20,48 @@ use constant {
     E_UNK_PH     => 'Cannot bind unknown placeholder (%s)',
 };
 
+sub _id {
+    my $self = $_[ 0 ];
+    return do {
+        if ( wantarray ) {
+            ref $self ? ( 0+ $self, $self ) : ();
+        } else {
+            ref $self ? 0+ $self : undef;
+        }
+    };
+}
+
+sub _private {
+    my $self = shift;
+    return do {
+        if ( ref $self ) {
+            my $id = 0+ $self;
+            unless ( $self->{ private_dbix_squirrel } ) {
+                $self->{ private_dbix_squirrel } = {};
+            }
+            if ( @_ ) {
+                $self->{ private_dbix_squirrel } = {
+                    %{ $self->{ private_dbix_squirrel } },
+                    do {
+                        if ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) {
+                            %{ $_[ 0 ] };
+                        } else {
+                            @_;
+                        }
+                    },
+                };
+            }
+            if ( wantarray ) {
+                ( $self->{ private_dbix_squirrel }, $self, $id );
+            } else {
+                $self->{ private_dbix_squirrel };
+            }
+        } else {
+            wantarray ? () : undef;
+        }
+    };
+}
+
 sub execute {
     my $sth = shift;
     if ( @_ ) {
@@ -32,9 +74,9 @@ sub execute {
 }
 
 sub bind {
-    my $sth = shift;
+    my ( $priv, $sth ) = shift->_private;
     if ( @_ ) {
-        my $order = $sth->{ private_dbix_squirrel }{ params };
+        my $order = $priv->{ params };
         if ( $order || ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) ) {
             my %kv = _format_params( $order, @_ );
             while ( my ( $k, $v ) = each %kv ) {
@@ -101,10 +143,10 @@ sub _order_of_placeholders_if_positional {
 }
 
 sub bind_param {
-    my $sth   = shift;
+    my ( $priv, $sth ) = shift->_private;
     my $param = shift;
     my %b;
-    if ( my $order = $sth->{ private_dbix_squirrel }{ params } ) {
+    if ( my $order = $priv->{ params } ) {
         if ( $param =~ m/^([\:\$\?]?(\d+))$/ ) {
             $sth->DBI::st::bind_param( $2, ( $b{ $2 } = shift ) );
         } else {
@@ -137,12 +179,11 @@ sub result_set {
 }
 
 sub iterate {
-    my $sth     = shift;
-    my $private = $sth->{ private_dbix_squirrel };
-    my $itor    = $private->{ itor } or do {
-        $private->{ itor } = DBIx::Squirrel::it->new( $sth, @_ );
+    my ( $priv, $sth ) = shift->_private;
+    my $itor = $priv->{ itor } or do {
+        $priv->{ itor } = DBIx::Squirrel::it->new( $sth, @_ );
     };
-    return $private->{ itor };
+    return $priv->{ itor };
 }
 
 sub reset {
@@ -182,7 +223,7 @@ sub reiterate {
 }
 
 sub iterator {
-    shift->{ private_dbix_squirrel }{ itor };
+    shift->_private->{ itor };
 }
 
 BEGIN {

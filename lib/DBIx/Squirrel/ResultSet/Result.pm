@@ -1,12 +1,12 @@
 use strict;
 use warnings;
 
-package DBIx::Squirrel::Result;
+package DBIx::Squirrel::ResultSet::Result;
 
 ## no critic (TestingAndDebugging::ProhibitNoStrict)
 
 BEGIN {
-    *DBIx::Squirrel::Result::VERSION = *DBIx::Squirrel::VERSION;
+    *DBIx::Squirrel::ResultSet::Result::VERSION = *DBIx::Squirrel::VERSION;
 }
 
 use namespace::autoclean;

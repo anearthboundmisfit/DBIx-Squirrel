@@ -32,12 +32,14 @@ sub _dump_state {
 }
 
 sub _id {
-    my $self = shift;
-    if ( wantarray ) {
-        ref $self ? ( 0+ $self, $self ) : ();
-    } else {
-        ref $self ? 0+ $self : undef;
-    }
+    my $self = $_[ 0 ];
+    return do {
+        if ( wantarray ) {
+            ref $self ? ( 0+ $self, $self ) : ();
+        } else {
+            ref $self ? 0+ $self : undef;
+        }
+    };
 }
 
 sub DESTROY {
@@ -74,7 +76,7 @@ sub new {
 }
 
 sub _set_slice {
-    my ( $c, $self ) = shift->_context;
+    my ( $c, $self ) = shift->_private;
     $self->{ Slice } = do {
         if ( @_ ) {
             if ( ref $_[ 0 ] && reftype( $_[ 0 ] ) =~ m/^ARRAY|HASH$/ ) {
@@ -89,18 +91,39 @@ sub _set_slice {
     return $self;
 }
 
-sub _context {
-    my $self = $_[ 0 ];
-    my $id   = 0+ $self;
-    if ( wantarray ) {
-        ref $self ? ( $itor{ $id }, $self, $id ) : ();
-    } else {
-        ref $self ? $itor{ $id } : undef;
-    }
+sub _private {
+    my $self = shift;
+    return do {
+        if ( ref $self ) {
+            my $id = 0+ $self;
+            unless ( $itor{ $id } ) {
+                $itor{ $id } = {};
+            }
+            if ( @_ ) {
+                $itor{ $id } = {
+                    %{ $itor{ $id } },
+                    do {
+                        if ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) {
+                            %{ $_[ 0 ] };
+                        } else {
+                            @_;
+                        }
+                    },
+                };
+            }
+            if ( wantarray ) {
+                ( $itor{ $id }, $self, $id );
+            } else {
+                $itor{ $id };
+            }
+        } else {
+            wantarray ? () : undef;
+        }
+    };
 }
 
 sub _set_max_rows {
-    my ( $c, $self ) = shift->_context;
+    my ( $c, $self ) = shift->_private;
     $self->{ MaxRows } = do {
         if ( @_ ) {
             if ( defined $_[ 0 ] && !ref $_[ 0 ] && int $_[ 0 ] > 0 ) {
@@ -116,7 +139,7 @@ sub _set_max_rows {
 }
 
 sub _finish {
-    my ( $c, $self ) = shift->_context;
+    my ( $c, $self ) = shift->_private;
     if ( my $sth = $c->{ st } ) {
         $sth->finish if $sth->{ Active };
     }
@@ -138,18 +161,17 @@ sub _finish {
 }
 
 sub first {
-    my ( $c, $self ) = shift->_context;
+    my ( $c, $self ) = shift->_private;
     $_ = do {
-        my @cb = pop if ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE';
         $self->reset( @_ );
-        $self->_get_row( @cb );
+        $self->_get_row;
     };
     return $_;
 }
 
 sub reset {
     local ( $_ );
-    my ( $c, $self ) = shift->_context;
+    my ( $c, $self ) = shift->_private;
     #
     # When using the "reset" method to modify the disposition and number of
     # rows fetched at a time, we allow ($slice, $max_rows), ($max_rows, $slice),
@@ -177,7 +199,7 @@ sub reset {
 }
 
 sub _get_row {
-    my ( $c, $self ) = shift->_context;
+    my ( $c, $self ) = shift->_private;
     return if $c->{ fi } || ( !$c->{ ex } && !$self->execute );
     my $row = do {
         if ( $self->_buffer_empty ) {
@@ -191,21 +213,11 @@ sub _get_row {
             shift @{ $c->{ bu } };
         }
     };
-    return do {
-        if ( $row ) {
-            if ( ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE' ) {
-                $row = pop->( $row );
-            } else {
-                $row;
-            }
-        } else {
-            undef;
-        }
-    };
+    return $row;
 }
 
 sub execute {
-    my ( $c, $self ) = shift->_context;
+    my ( $c, $self ) = shift->_private;
     $_ = do {
         if ( my $sth = $c->{ st } ) {
             if ( $c->{ ex } || $c->{ fi } ) {
@@ -229,7 +241,7 @@ sub execute {
 }
 
 sub _charge_buffer {
-    my $c   = $_[ 0 ]->_context;
+    my $c   = $_[ 0 ]->_private;
     my $sth = $c->{ st };
     return unless $sth && $sth->{ Active };
     my $res = do {
@@ -265,7 +277,7 @@ sub _charge_buffer {
 }
 
 sub _buffer_empty {
-    my $c = $_[ 0 ]->_context;
+    my $c = $_[ 0 ]->_private;
     return do {
         if ( $c->{ bu } ) {
             1 if @{ $c->{ bu } } < 1;
@@ -278,13 +290,12 @@ sub _buffer_empty {
 sub single {
     my $self = shift;
     $_ = do {
-        my @cb  = pop if ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE';
         my $res = do {
             if ( my $row_count = $self->execute( @_ ) ) {
                 if ( $row_count > 1 ) {
                     whine 'Query returned more than one row';
                 }
-                $self->_get_row( @cb );
+                $self->_get_row;
             } else {
                 undef;
             }
@@ -299,9 +310,8 @@ sub find {
     my $self = shift;
     $_ = do {
         my $res = do {
-            my @cb = pop if ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE';
             if ( my $row_count = $self->execute( @_ ) ) {
-                $self->_get_row( @cb );
+                $self->_get_row;
             } else {
                 undef;
             }
@@ -319,10 +329,9 @@ sub count {
 sub all {
     my $self = shift;
     $_ = do {
-        my @cb  = pop if ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE';
         my $res = do {
             if ( $self->execute( @_ ) ) {
-                $self->remaining( @cb );
+                $self->remaining;
             } else {
                 [];
             }
@@ -334,20 +343,13 @@ sub all {
 }
 
 sub remaining {
-    my ( $c, $self ) = shift->_context;
+    my ( $c, $self ) = shift->_private;
     $_ = do {
-        my @cb = pop if ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE';
         if ( $c->{ fi } || ( !$c->{ ex } && !$self->execute ) ) {
             undef;
         } else {
             while ( $self->_charge_buffer ) { ; }
-            my $rows = do {
-                if ( @cb ) {
-                    [ map { $cb[ 0 ]->( $_ ) } @{ $c->{ bu } } ]
-                } else {
-                    $c->{ bu };
-                }
-            };
+            my $rows = $c->{ bu };
             $c->{ rc } = $c->{ rf };
             $c->{ bu } = undef;
             $self->reset;
@@ -360,7 +362,6 @@ sub remaining {
 sub next {
     my $self = shift;
     $_ = do {
-        my @cb = pop if ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE';
         if ( @_ ) {
             if ( ref $_[ 0 ] ) {
                 $self->_set_slice( shift );
@@ -378,7 +379,7 @@ sub next {
                 }
             }
         }
-        $self->_get_row( @cb );
+        $self->_get_row;
     };
     return $_;
 }
@@ -392,23 +393,23 @@ sub result_set {
 }
 
 sub sth {
-    shift->_context->{ st };
+    shift->_private->{ st };
 }
 
 sub pending_execution {
-    shift->_context->{ ex };
+    shift->_private->{ ex };
 }
 
 sub not_pending_execution {
-    not shift->_context->{ ex };
+    not shift->_private->{ ex };
 }
 
 sub done {
-    shift->_context->{ fi };
+    shift->_private->{ fi };
 }
 
 sub not_done {
-    not shift->_context->{ fi };
+    not shift->_private->{ fi };
 }
 
 BEGIN {

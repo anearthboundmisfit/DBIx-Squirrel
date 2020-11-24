@@ -26,12 +26,12 @@ sub prepare {
         }
     };
     if ( $sth ) {
-        $sth->{ private_dbix_squirrel } = {
-            sql    => $sql,
-            std    => $std,
-            params => $params,
-        };
-        bless $sth, 'DBIx::Squirrel::st';
+        bless( $sth, 'DBIx::Squirrel::st' )->_private( {
+                sql    => $sql,
+                std    => $std,
+                params => $params,
+            },
+        );
     }
     return $sth;
 }
@@ -41,7 +41,7 @@ sub _common_prepare_work {
         my $statement = do {
             if ( blessed( $_[ 0 ] ) ) {
                 if ( $_[ 0 ]->isa( 'DBIx::Squirrel::st' ) ) {
-                    shift->{ private_dbix_squirrel }{ sql };
+                    shift->_private->{ sql };
                 } elsif ( $_[ 0 ]->isa( 'DBI::st' ) ) {
                     shift->{ Statement };
                 } else {
@@ -88,13 +88,13 @@ sub prepare_cached {
         }
     };
     if ( $sth ) {
-        $sth->{ private_dbix_squirrel } = {
-            cache_key => join( '#', ( caller 0 )[ 1, 2 ] ),
-            sql       => $sql,
-            std       => $std,
-            params    => $params,
-        };
-        bless $sth, 'DBIx::Squirrel::st';
+        bless( $sth, 'DBIx::Squirrel::st' )->_private( {
+                cache_key => join( '#', ( caller 0 )[ 1, 2 ] ),
+                sql       => $sql,
+                std       => $std,
+                params    => $params,
+            }
+        );
     }
     return $sth;
 }
@@ -134,8 +134,6 @@ sub do {
     }
     return wantarray ? ( $res, $sth ) : $res;
 }
-
-
 
 sub iterate {
     my $dbh       = shift;
