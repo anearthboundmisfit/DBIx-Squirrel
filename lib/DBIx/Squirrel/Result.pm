@@ -19,7 +19,7 @@ sub AUTOLOAD {
     local ( $_ );
     ( my $name = $AUTOLOAD ) =~ s/.*:://;
     return if $name eq 'DESTROY';
-    my $self    = shift;
+    my $self    = $_[ 0 ];
     my $class   = ref $self;
     my $closure = do {
         if ( reftype( $self ) eq 'ARRAY' ) {
@@ -51,8 +51,9 @@ sub AUTOLOAD {
     } else {
         throw 'Unrecognised column name (%s)', $name;
     }
-    return $closure->( $self );
+    goto &{ $closure };
 }
+
 
 ## use critic
 
