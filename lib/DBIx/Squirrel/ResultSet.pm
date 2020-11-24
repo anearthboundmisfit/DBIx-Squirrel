@@ -21,10 +21,7 @@ sub DESTROY {
     local ( $., $@, $!, $^E, $?, $_ );
     my ( $id, $self ) = shift->_id;
     my $class = ref( $self ) . '_' . sprintf( '0x%x', $id ) . '::Result';
-    *{ $class . '::_rs' } = do {
-        weaken $self;
-        sub { undef };
-    };
+    *{ $class . '::_rs' } = sub { undef };
     return $self->SUPER::DESTROY;
 }
 
