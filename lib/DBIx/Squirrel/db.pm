@@ -135,14 +135,13 @@ sub do {
     return wantarray ? ( $res, $sth ) : $res;
 }
 
-sub iterate {
-    my $dbh       = shift;
-    my $statement = shift;
-    return $dbh->prepare( $statement )->iterate( @_ );
-}
+sub iterate { shift->prepare( shift )->iterate( @_ ) }
+
+sub resultset { shift->prepare( shift )->resultset( @_ ) }
 
 BEGIN {
     *it = *iterate;
+    *rs = *resultset;
 }
 
 ## use critic

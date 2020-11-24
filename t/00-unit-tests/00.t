@@ -949,10 +949,10 @@ sub test_the_basics {
                     'FROM media_types',
                 )
             )->reset( {} );
-            $sth->result_set;
+            $sth->resultset;
         },
     );
-    is_deeply $exp, $got, 'result_set'
+    is_deeply $exp, $got, 'resultset'
       or dump_val { exp => $exp, got => $got };
 
     ( $exp, $got ) = (
@@ -964,10 +964,10 @@ sub test_the_basics {
                     'FROM media_types',
                 )
             );
-            $sth->result_set->reset( {} );
+            $sth->resultset->reset( {} );
         },
     );
-    is_deeply $exp, $got, 'result_set'
+    is_deeply $exp, $got, 'resultset'
       or dump_val { exp => $exp, got => $got };
 
     ( $exp, $got ) = (
@@ -979,10 +979,10 @@ sub test_the_basics {
                     'FROM media_types',
                 )
             )->reset( [] );
-            $sth->result_set;
+            $sth->resultset;
         },
     );
-    is_deeply $exp, $got, 'result_set'
+    is_deeply $exp, $got, 'resultset'
       or dump_val { exp => $exp, got => $got };
 
     ( $exp, $got ) = (
@@ -994,25 +994,25 @@ sub test_the_basics {
                     'FROM media_types',
                 )
             );
-            $sth->result_set->reset( [] );
+            $sth->resultset->reset( [] );
         },
     );
-    is_deeply $exp, $got, 'result_set'
+    is_deeply $exp, $got, 'resultset'
       or dump_val { exp => $exp, got => $got };
 
     ( $exp, $got ) = (
         bless( { MaxRows => 10, Slice => [] }, 'DBIx::Squirrel::ResultSet' ),
         do {
-            $sth->result_set;
+            $sth->resultset;
         },
     );
-    is_deeply $exp, $got, 'result_set'
+    is_deeply $exp, $got, 'resultset'
       or dump_val { exp => $exp, got => $got };
 
     ( $exp, $got ) = (
         bless( [ 1, "MPEG audio file" ], 'DBIx::Squirrel::Result' ),
         do {
-            $sth->result_set->first;
+            $sth->resultset->first;
         },
     );
     is_deeply $exp, $got, 'first'
@@ -1052,7 +1052,7 @@ sub test_the_basics {
         ],
         ,
         do {
-            [ $sth->result_set->all ];
+            [ $sth->resultset->all ];
         },
     );
     # is_deeply $exp, $got, 'all'
@@ -1064,7 +1064,7 @@ sub test_the_basics {
     ( $exp, $got ) = (
         5,
         do {
-            my $rs = $sth->result_set;
+            my $rs = $sth->resultset;
             $rs->count;
         },
     );
@@ -1076,7 +1076,7 @@ sub test_the_basics {
 $sth = $standard_ekorn_dbh->prepare(<<';');
   SELECT MediaTypeId, Name FROM media_types
 ;
-$rs = $sth->result_set;
+$rs = $sth->resultset;
 while ($rs->next) {
   diag $_->Name;
 }
