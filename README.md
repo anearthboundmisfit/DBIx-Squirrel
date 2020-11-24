@@ -66,9 +66,9 @@ $itr = $sth->iterate(['1001099']);
 
 $sth = $dbh->prepare('SELECT * FROM product WHERE id = :id');
 $sth->bind_param(':id', '1001099');
-$res = $sth->bind( ':id', '1001099' );
-$res = $sth->bind([':id', '1001099']);
-$res = $sth->bind({':id', '1001099'});
+$res = $sth->bind( ':id'=>'1001099' );
+$res = $sth->bind([':id'=>'1001099']);
+$res = $sth->bind({':id'=>'1001099'});
 $res = $sth->bind( id=>'1001099' );
 $res = $sth->bind([id=>'1001099']);
 $res = $sth->bind({id=>'1001099'});
@@ -80,6 +80,43 @@ $itr = $sth->iterate( id=>'1001099' );
 $itr = $sth->iterate([id=>'1001099']);
 $itr = $sth->iterate({id=>'1001099'});
 
+# The database handle "do" method works as before, but it also
+# returns the statement handle when called in list-context. So
+# we can use it to prepare and execute statements, before we
+# fetch results. Be careful to use "undef" if passing named
+# parameters in a hashref so they are not used as statement
+# attributes. The new "do" is smart enough not to confuse
+# other things as statement attributes.
+#
+($res, $sth) = $dbh->do(
+  'SELECT * FROM product WHERE id = ?', '1001099'
+);
+($res, $sth) = $dbh->do(
+  'SELECT * FROM product WHERE id = ?', ['1001099']
+);
+($res, $sth) = $dbh->do(
+  'SELECT * FROM product WHERE id = :id', ':id'=>'1001099'
+);
+($res, $sth) = $dbh->do(
+  'SELECT * FROM product WHERE id = :id', id=>'1001099'
+);
+($res, $sth) = $dbh->do(
+  'SELECT * FROM product WHERE id = :id', [':id'=>'1001099']
+);
+($res, $sth) = $dbh->do(
+  'SELECT * FROM product WHERE id = :id', [id=>'1001099']
+);
+($res, $sth) = $dbh->do( # ------------ undef or \%attr
+  'SELECT * FROM product WHERE id = :id', undef,
+  {':id'=>'1001099'}
+);
+($res, $sth) = $dbh->do( # ------------ undef or \%attr
+  'SELECT * FROM product WHERE id = :id', undef,
+  {id=>'1001099'},
+);
+
+# Using the iterators couldn't be easier!
+#
 @ary = ();
 while ($next = $itr->next) {
   push @ary, $next;
@@ -105,14 +142,16 @@ $row = $itr->find( id=>'1001100' );
 $row = $itr->find([id=>'1001100']);
 $row = $itr->find({id=>'1001100'});
 
-# Result sets are just fancy iterators that "bless" results. This
-# will allow use to use accessors to get at column values without
-# being having to worry whether results are arrayrefs or hashrefs
+# Result sets are just fancy iterators that "bless" results in
+# a manner that enables us to get column values using accessor
+# methods, without ever having to worry about whether the row
+# is implemented as an arrayref or hashref. Accessors are not
+# case-sensitive.
 #
 $sth = $dbh->prepare('SELECT MediaTypeId, Name FROM media_types');
-$res = $sth->result_set;
+$res = $sth->resultset;
 while ($res->next) {
-  print $_->Name, "\n";
+  print $_->name, "\n";
 }
 ```
 

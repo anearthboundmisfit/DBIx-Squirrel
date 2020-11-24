@@ -1078,7 +1078,7 @@ $sth = $standard_ekorn_dbh->prepare(<<';');
 ;
 $rs = $sth->result_set;
 while ($rs->next) {
-  print $_->Name, "\n";
+  diag $_->Name;
 }
 
     $standard_ekorn_dbh->disconnect;

@@ -26,12 +26,12 @@ sub prepare {
         }
     };
     if ( $sth ) {
-        $sth->{ private_dbix_squirrel } = {
-            sql    => $sql,
-            std    => $std,
-            params => $params,
-        };
-        bless $sth, 'DBIx::Squirrel::st';
+        bless( $sth, 'DBIx::Squirrel::st' )->_private( {
+                sql    => $sql,
+                std    => $std,
+                params => $params,
+            },
+        );
     }
     return $sth;
 }
@@ -41,7 +41,7 @@ sub _common_prepare_work {
         my $statement = do {
             if ( blessed( $_[ 0 ] ) ) {
                 if ( $_[ 0 ]->isa( 'DBIx::Squirrel::st' ) ) {
-                    shift->{ private_dbix_squirrel }{ sql };
+                    shift->_private->{ sql };
                 } elsif ( $_[ 0 ]->isa( 'DBI::st' ) ) {
                     shift->{ Statement };
                 } else {
@@ -88,13 +88,13 @@ sub prepare_cached {
         }
     };
     if ( $sth ) {
-        $sth->{ private_dbix_squirrel } = {
-            cache_key => join( '#', ( caller 0 )[ 1, 2 ] ),
-            sql       => $sql,
-            std       => $std,
-            params    => $params,
-        };
-        bless $sth, 'DBIx::Squirrel::st';
+        bless( $sth, 'DBIx::Squirrel::st' )->_private( {
+                cache_key => join( '#', ( caller 0 )[ 1, 2 ] ),
+                sql       => $sql,
+                std       => $std,
+                params    => $params,
+            }
+        );
     }
     return $sth;
 }
@@ -102,28 +102,37 @@ sub prepare_cached {
 sub do {
     my $dbh       = shift;
     my $statement = shift;
-    my $res       = do {
-        if ( @_ ) {
-            if ( ref $_[ 0 ] ) {
-                if ( reftype( $_[ 0 ] ) eq 'HASH' ) {
-                    $dbh->prepare( $statement, shift )->execute( @_ );
-                } elsif ( reftype( $_[ 0 ] ) eq 'ARRAY' ) {
-                    $dbh->prepare( $statement )->execute( @_ );
-                } else {
-                    throw 'Expected a reference to a HASH or ARRAY';
+    my ( $res, $sth );
+    if ( @_ ) {
+        if ( ref $_[ 0 ] ) {
+            if ( reftype( $_[ 0 ] ) eq 'HASH' ) {
+                if ( $sth = $dbh->prepare( $statement, shift ) ) {
+                    $res = $sth->execute( @_ );
+                }
+            } elsif ( reftype( $_[ 0 ] ) eq 'ARRAY' ) {
+                if ( $sth = $dbh->prepare( $statement ) ) {
+                    $res = $sth->execute( @_ );
                 }
             } else {
-                if ( defined $_[ 0 ] ) {
-                    $dbh->prepare( $statement )->execute( @_ );
-                } else {
-                    $dbh->prepare( $statement, shift )->execute( @_ );
-                }
+                throw 'Expected a reference to a HASH or ARRAY';
             }
         } else {
-            $dbh->prepare( $statement )->execute;
+            if ( defined $_[ 0 ] ) {
+                if ( $sth = $dbh->prepare( $statement ) ) {
+                    $res = $sth->execute( @_ );
+                }
+            } else {
+                if ( $sth = $dbh->prepare( $statement, shift ) ) {
+                    $res = $sth->execute( @_ );
+                }
+            }
         }
-    };
-    return $res;
+    } else {
+        if ( $sth = $dbh->prepare( $statement ) ) {
+            $res = $sth->execute;
+        }
+    }
+    return wantarray ? ( $res, $sth ) : $res;
 }
 
 sub iterate {

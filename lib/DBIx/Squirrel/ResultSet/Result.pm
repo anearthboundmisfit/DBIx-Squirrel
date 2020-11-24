@@ -1,24 +1,25 @@
 use strict;
 use warnings;
 
-package DBIx::Squirrel::Result;
+package DBIx::Squirrel::ResultSet::Result;
 
 ## no critic (TestingAndDebugging::ProhibitNoStrict)
 
 BEGIN {
-    *DBIx::Squirrel::Result::VERSION = *DBIx::Squirrel::VERSION;
+    *DBIx::Squirrel::ResultSet::Result::VERSION = *DBIx::Squirrel::VERSION;
 }
 
 use namespace::autoclean;
 use Scalar::Util 'reftype';
+use Sub::Name 'subname';
 use DBIx::Squirrel::util 'throw';
 
 our $AUTOLOAD;
 
 sub AUTOLOAD {
-    local ( $_ );
     ( my $name = $AUTOLOAD ) =~ s/.*:://;
     return if $name eq 'DESTROY';
+    local ( $_ );
     my $self    = $_[ 0 ];
     my $class   = ref $self;
     my $closure = do {
@@ -47,13 +48,13 @@ sub AUTOLOAD {
     };
     if ( $closure ) {
         no strict 'refs';
-        *{ $class . '::' . $name } = $closure;
+        my $symbol = $class . '::' . $name;
+        *{ $symbol } = subname( $symbol, $closure );
     } else {
         throw 'Unrecognised column name (%s)', $name;
     }
     goto &{ $closure };
 }
-
 
 ## use critic
 

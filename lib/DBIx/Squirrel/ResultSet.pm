@@ -12,35 +12,49 @@ BEGIN {
 
 use namespace::autoclean;
 use Scalar::Util 'reftype', 'weaken';
-use DBIx::Squirrel::Result;
+use Sub::Name 'subname';
+use DBIx::Squirrel::ResultSet::Result;
 
 sub DESTROY {
     return if ${^GLOBAL_PHASE} eq 'DESTRUCT';
-    no strict 'refs';
-    no warnings 'redefine';
     local ( $., $@, $!, $^E, $?, $_ );
     my ( $id, $self ) = shift->_id;
-    my $class = ref( $self ) . '_' . sprintf( '0x%x', $id ) . '::Result';
-    *{ $class . '::_rs' } = sub { undef };
+    my $class = $self->result_class;
+    no strict 'refs';
+    undef &{ "$class\::_rs" };
     return $self->SUPER::DESTROY;
 }
+
+sub result_class { sprintf( '%s::Result_0x%x', ref $_[ 0 ], 0+ $_[ 0 ] ) }
 
 sub _get_row {
     my $self = shift;
     my $row  = $self->SUPER::_get_row( @_ );
-    $self->_bless_row( $row ) if ref $row;
+    $self->_bless_row( $row );
     return $row;
 }
 
 sub _bless_row {
-    no strict 'refs';
-    my ( $id, $self ) = shift->_id;
-    my $class = ref( $self ) . '_' . sprintf( '0x%x', $id ) . '::Result';
-    my $row   = bless( shift, $class );
-    unless ( defined &{ $class . '::_rs' } && $class->_rs ) {
-        @{ $class . '::ISA' } = ( 'DBIx::Squirrel::Result' );
-        *{ $class . '::_rs' } = sub { $self };
-    }
+    my $self = shift;
+    my $row  = do {
+        if ( ref $_[ 0 ] ) {
+            my $class = $self->result_class;
+            unless ( defined &{ $class . '::_rs' } ) {
+                no strict 'refs';
+                undef &{ "$class\::_rs" };
+                *{ "$class\::_rs" } = do {
+                    weaken( my $rs = $self );
+                    subname( "$class\::_rs", sub { $rs } );
+                };
+                @{ "$class\::ISA" } = (
+                    'DBIx::Squirrel::ResultSet::Result',
+                );
+            }
+            bless shift, $class;
+        } else {
+            undef;
+        }
+    };
     return $row;
 }
 
@@ -57,6 +71,11 @@ sub remaining {
         }
     }
     return $rows;
+}
+
+BEGIN {
+    *resultclass = *result_class;
+    *rc          = *result_class;
 }
 
 ## use critic
