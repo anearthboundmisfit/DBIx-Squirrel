@@ -170,52 +170,20 @@ sub bind_param {
 
 sub prepare {
     my $sth = shift;
-    my $dbh = $sth->{ Database };
-    return $dbh->prepare( $sth->{ Statement }, @_ );
+    return $sth->{ Database }->prepare( $sth->{ Statement }, @_ );
 }
 
-sub resultset {
-    return bless( shift->iterate( @_ ), 'DBIx::Squirrel::ResultSet' );
-}
+sub resultset { bless shift->iterate( @_ ), 'DBIx::Squirrel::ResultSet' }
 
 sub iterate {
     my ( $priv, $sth ) = shift->_private;
-    my $itor = $priv->{ itor } or do {
-        $priv->{ itor } = DBIx::Squirrel::it->new( $sth, @_ );
+    return do {
+        if ( my $itor = $priv->{itor} ) {
+            $itor;
+        } else {
+            DBIx::Squirrel::it->new( $sth, @_ );
+        }
     };
-    return $priv->{ itor };
-}
-
-sub reset {
-    shift->iterate->reset( @_ )->sth;
-}
-
-sub single {
-    shift->iterate->single( @_ );
-}
-
-sub find {
-    shift->iterate->find( @_ );
-}
-
-sub first {
-    shift->iterate->first( @_ );
-}
-
-sub all {
-    shift->iterate->all( @_ );
-}
-
-sub remaining {
-    shift->iterate->remaining( @_ );
-}
-
-sub next {
-    shift->iterate->next( @_ );
-}
-
-sub count {
-    shift->iterate->count( @_ );
 }
 
 sub reiterate {
@@ -223,7 +191,7 @@ sub reiterate {
 }
 
 sub iterator {
-    shift->_private->{ itor };
+    $_[0]->_private->{ itor };
 }
 
 BEGIN {
