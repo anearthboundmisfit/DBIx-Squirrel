@@ -170,14 +170,7 @@ sub first {
 }
 
 sub reset {
-    local ( $_ );
     my ( $c, $self ) = shift->_private;
-    #
-    # When using the "reset" method to modify the disposition and number of
-    # rows fetched at a time, we allow ($slice, $max_rows), ($max_rows, $slice),
-    # either one or the other, or none. In the case of none, the only action
-    # performed is to finish the statement and reset the iterator.
-    #
     if ( @_ ) {
         if ( ref $_[ 0 ] ) {
             $self->_set_slice( shift );
@@ -200,17 +193,20 @@ sub reset {
 
 sub _get_row {
     my ( $c, $self ) = shift->_private;
-    return if $c->{ fi } || ( !$c->{ ex } && !$self->execute );
     my $row = do {
-        if ( $self->_buffer_empty ) {
-            $self->_charge_buffer;
-        }
-        if ( $self->_buffer_empty ) {
-            $c->{ fi } = 1;
+        if ($c->{ fi } || ( !$c->{ ex } && !$self->execute )) {
             undef;
         } else {
-            $c->{ rc } += 1;
-            shift @{ $c->{ bu } };
+            if ( $self->_buffer_empty ) {
+                $self->_charge_buffer;
+            }
+            if ( $self->_buffer_empty ) {
+                $c->{ fi } = 1;
+                undef;
+            } else {
+                $c->{ rc } += 1;
+                shift @{ $c->{ bu } };
+            }
         }
     };
     return $row;
