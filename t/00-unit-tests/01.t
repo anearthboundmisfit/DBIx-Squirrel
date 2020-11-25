@@ -89,7 +89,9 @@ sub test_prepare_execute_fetch_single_row {
         $arrayrefs[ 0 ],
         do {
             $sth->execute;
-            ( $stderr, $row ) = capture_stderr { $sth->single };
+            ( $stderr, $row ) = capture_stderr { 
+                $sth->iterate->single;
+            };
             $row;
         },
     );
