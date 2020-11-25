@@ -19,40 +19,33 @@ our $AUTOLOAD;
 sub AUTOLOAD {
     ( my $name = $AUTOLOAD ) =~ s/.*:://;
     return if $name eq 'DESTROY';
-    local ( $_ );
-    my $self    = $_[ 0 ];
-    my $class   = ref $self;
+    my ( $self, $class ) = ( $_[ 0 ], ref $_[ 0 ] );
     my $closure = do {
         if ( reftype( $self ) eq 'ARRAY' ) {
             my $sth   = $self->resultset->sth;
             my $index = $sth->{ NAME_lc_hash }{ lc $name };
-            if ( defined $index ) {
-                sub { shift->[ $index ] };
-            } else {
-                undef;
+            unless ( defined $index ) {
+                throw 'Unrecognised column name (%s)', $name;
             }
+            sub { shift->[ $index ] };
         } elsif ( reftype( $self ) eq 'HASH' ) {
             if ( exists $self->{ $name } ) {
                 sub { shift->{ $name } };
             } else {
-                my ( $index ) = grep { $name eq lc $_ } keys %{ $self };
-                if ( defined $index ) {
-                    sub { shift->{ $index } };
-                } else {
-                    undef;
+                local ( $_ );
+                my ( $index ) = grep { $name eq lc } keys %{ $self };
+                unless ( defined $index ) {
+                    throw 'Unrecognised column name (%s)', $name;
                 }
+                sub { shift->{ $index } };
             }
         } else {
             throw 'Object is not a blessed array or hash reference';
         }
     };
-    if ( $closure ) {
-        no strict 'refs';
-        my $symbol = "$class\::$name";
-        *{ $symbol } = subname( $symbol, $closure );
-    } else {
-        throw 'Unrecognised column name (%s)', $name;
-    }
+    no strict 'refs';
+    my $symbol = "$class\::$name";
+    *{ $symbol } = subname( $symbol, $closure );
     goto &{ $closure };
 }
 
