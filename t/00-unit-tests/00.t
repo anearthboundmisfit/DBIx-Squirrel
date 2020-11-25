@@ -861,7 +861,7 @@ sub test_the_basics {
         [ 1, 'MPEG audio file' ],
         do {
             diag "";
-            diag "THE FOLLOWING WARNING IS EXPECTED - BE NOT ALARMED!";
+            diag "THE FOLLOWING WARNING IS EXPECTED";
             diag "";
             $it->single;
         }
@@ -1025,11 +1025,8 @@ sub test_the_basics {
             [ $sth->resultset->all ];
         },
     );
-    # is_deeply $exp, $got, 'all'
-    #   or dump_val { exp => $exp, got => $got };
-
-    dump_val $got;
-    dump_val [$got->[0]->Name];
+    is_deeply $exp, $got, 'all'
+      or dump_val { exp => $exp, got => $got };
 
     ( $exp, $got ) = (
         5,
@@ -1046,10 +1043,9 @@ sub test_the_basics {
 $sth = $standard_ekorn_dbh->prepare(<<';');
   SELECT MediaTypeId, Name FROM media_types
 ;
-$rs = $sth->resultset;
-while ($rs->next) {
-  diag $_->Name;
-}
+$rs = $sth->resultset( sub { $_->name } );
+#diag $_ for $rs->remaining;
+diag $_ for $rs->all;
 
     $standard_ekorn_dbh->disconnect;
     $standard_dbi_dbh->disconnect;
