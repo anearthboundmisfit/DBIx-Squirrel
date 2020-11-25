@@ -54,19 +54,19 @@ sub DESTROY {
 
 sub new {
     $_ = do {
-        my $package = ref $_[ 0 ] ? ref shift : shift;
-        my $sth     = shift;
+        my $class = ref $_[ 0 ] ? ref shift : shift;
+        my $sth   = shift;
         if ( ref $sth && blessed( $sth ) && $sth->isa( 'DBI::st' ) ) {
-            my $self = bless {}, $package;
+            my $self = bless {}, $class;
             my $id   = 0+ $self;
             $itor{ $id } = {
                 st => $sth,
                 id => $id,
-                bp => [ @_ ],
+                bp => \@_,
                 sl => $self->_set_slice->{ Slice },
                 mr => $self->_set_max_rows->{ MaxRows },
             };
-            $sth->{ private_dbix_squirrel }{ itor } = $self;
+            $sth->_private->{ itor } = $self;
             $self->_finish;
         } else {
             undef;
@@ -194,7 +194,7 @@ sub reset {
 sub _get_row {
     my ( $c, $self ) = shift->_private;
     my $row = do {
-        if ($c->{ fi } || ( !$c->{ ex } && !$self->execute )) {
+        if ( $c->{ fi } || ( !$c->{ ex } && !$self->execute ) ) {
             undef;
         } else {
             if ( $self->_buffer_empty ) {

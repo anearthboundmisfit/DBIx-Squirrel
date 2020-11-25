@@ -11,7 +11,7 @@ BEGIN {
 }
 
 use namespace::autoclean;
-use DBIx::Squirrel::it;
+use DBIx::Squirrel::ResultSet;
 use DBIx::Squirrel::util 'throw', 'whine';
 use Scalar::Util 'reftype';
 
@@ -173,22 +173,9 @@ sub prepare {
     return $sth->{ Database }->prepare( $sth->{ Statement }, @_ );
 }
 
-sub resultset { bless shift->iterate( @_ ), 'DBIx::Squirrel::ResultSet' }
+sub iterate { DBIx::Squirrel::it->new( shift, @_ ) }
 
-sub iterate {
-    my ( $priv, $sth ) = shift->_private;
-    return do {
-        if ( my $itor = $priv->{itor} ) {
-            $itor;
-        } else {
-            DBIx::Squirrel::it->new( $sth, @_ );
-        }
-    };
-}
-
-sub reiterate {
-    shift->prepare->iterate( @_ );
-}
+sub resultset { DBIx::Squirrel::ResultSet->new( shift, @_ ) }
 
 sub iterator {
     $_[0]->_private->{ itor };
@@ -198,7 +185,6 @@ BEGIN {
     *itor  = *iterator;
     *it    = *iterate;
     *rs    = *resultset;
-    *reit  = *reiterate;
     *clone = *prepare;
 }
 

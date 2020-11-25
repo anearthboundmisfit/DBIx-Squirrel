@@ -13,6 +13,7 @@ BEGIN {
 use namespace::autoclean;
 use Scalar::Util 'reftype', 'weaken';
 use Sub::Name 'subname';
+use DBIx::Squirrel::it;
 use DBIx::Squirrel::ResultClass;
 
 sub DESTROY {
@@ -23,6 +24,16 @@ sub DESTROY {
     no strict 'refs';
     undef &{ "$class\::resultset" };
     return $self->SUPER::DESTROY;
+}
+
+sub new {
+    my @cb;
+    while ( ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE' ) {
+        unshift @cb, pop;
+    }
+    my $self = shift->SUPER::new( @_ );
+    $self->_private->{ cb } = \@cb;
+    return $self;
 }
 
 sub resultclass { 'DBIx::Squirrel::ResultClass' }
@@ -36,14 +47,35 @@ sub rowclass {
 
 sub _get_row {
     my $self = shift;
-    my $row  = $self->SUPER::_get_row( @_ );
-    $self->_bless_row( $row );
-    return $row;
+    my $row  = $self->SUPER::_get_row;
+    return do {
+        if ( @{ $self->_private->{ cb } } ) {
+            $self->_transform( $self->_bless( $row ) );
+        } else {
+            $self->_bless( $row );
+        }
+    };
 }
 
-sub _bless_row {
+sub _transform {
+    my ( $private, $self ) = shift->_private;
+    return do {
+        if ( defined $_[ 0 ] ) {
+            local ( $_ );
+            my $row = $_[ 0 ];
+            for my $cb ( @{ $private->{ cb } } ) {
+                $row = $cb->( $_ = $row );
+            }
+            $row;
+        } else {
+            undef;
+        }
+    };
+}
+
+sub _bless {
     my ( $rowclass, $self ) = shift->rowclass;
-    my $row = do {
+    return do {
         if ( ref $_[ 0 ] ) {
             my $resultclass = $self->resultclass;
             unless ( defined &{ $rowclass . '::resultset' } ) {
@@ -62,22 +94,20 @@ sub _bless_row {
             undef;
         }
     };
-    return $row;
 }
 
 sub remaining {
-    my $self = shift;
-    my $rows = $self->SUPER::remaining( @_ );
-    if ( @{ $rows } ) {
-        $self->_bless_row( $rows->[ 0 ] );
-        if ( @{ $rows } > 1 ) {
-            my $rowclass = ref $rows->[ 0 ];
-            for my $row ( @{ $rows }[ 1 .. $#{ $rows } ] ) {
-                bless $row, $rowclass;
-            }
+    my ( $rowclass, $self ) = shift->rowclass;
+    $_ = do {
+        local ( $_ );
+        my $rows = $self->SUPER::remaining( @_ );
+        if ( @{ $self->_private->{ cb } } ) {
+            [ map { $self->_transform( $self->_bless( $_ ) ) } @{ $rows } ];
+        } else {
+            [ map { $self->_bless( $_ ) } @{ $rows } ];
         }
-    }
-    return $rows;
+    };
+    return wantarray ? @{ $_ } : $_;
 }
 
 BEGIN {
