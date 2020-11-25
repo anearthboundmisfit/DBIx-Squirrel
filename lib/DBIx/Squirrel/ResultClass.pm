@@ -1,12 +1,12 @@
 use strict;
 use warnings;
 
-package DBIx::Squirrel::ResultSet::Result;
+package DBIx::Squirrel::ResultClass;
 
 ## no critic (TestingAndDebugging::ProhibitNoStrict)
 
 BEGIN {
-    *DBIx::Squirrel::ResultSet::Result::VERSION = *DBIx::Squirrel::VERSION;
+    *DBIx::Squirrel::ResultClass::VERSION = *DBIx::Squirrel::VERSION;
 }
 
 use namespace::autoclean;
@@ -15,6 +15,15 @@ use Sub::Name 'subname';
 use DBIx::Squirrel::util 'throw';
 
 our $AUTOLOAD;
+
+sub new {
+    my $rowclass = ref $_[ 0 ] || $_[ 0 ];
+    return bless $_[ 1 ], $rowclass;
+}
+
+sub resultclass { $_[ 0 ]->resultset->resultclass }
+
+sub rowclass { $_[ 0 ]->resultset->rowclass }
 
 sub AUTOLOAD {
     ( my $name = $AUTOLOAD ) =~ s/.*:://;
