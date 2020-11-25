@@ -13,7 +13,7 @@ BEGIN {
 use namespace::autoclean;
 use Scalar::Util 'reftype', 'weaken';
 use Sub::Name 'subname';
-use DBIx::Squirrel::ResultSet::Result;
+use DBIx::Squirrel::ResultClass;
 
 sub DESTROY {
     return if ${^GLOBAL_PHASE} eq 'DESTRUCT';
@@ -25,7 +25,14 @@ sub DESTROY {
     return $self->SUPER::DESTROY;
 }
 
-sub resultclass { sprintf( '%s::Result_0x%x', ref $_[ 0 ], 0+ $_[ 0 ] ) }
+sub resultclass { 'DBIx::Squirrel::ResultClass' }
+
+sub rowclass {
+    my $self        = $_[ 0 ];
+    my $resultclass = $self->resultclass;
+    my $rowclass    = sprintf '%s_0x%x', $resultclass, 0+ $self;
+    return wantarray ? ( $rowclass, $self ) : $rowclass;
+}
 
 sub _get_row {
     my $self = shift;
@@ -35,24 +42,22 @@ sub _get_row {
 }
 
 sub _bless_row {
-    my $self = shift;
-    my $row  = do {
+    my ( $rowclass, $self ) = shift->rowclass;
+    my $row = do {
         if ( ref $_[ 0 ] ) {
-            my $class = $self->resultclass;
-            unless ( defined &{ $class . '::resultset' } ) {
+            my $resultclass = $self->resultclass;
+            unless ( defined &{ $rowclass . '::resultset' } ) {
                 no strict 'refs';
-                undef &{ "$class\::resultset" };
-                *{ "$class\::resultset" } = do {
+                undef &{ "$rowclass\::resultset" };
+                *{ "$rowclass\::resultset" } = do {
                     weaken( my $rs = $self );
-                    subname( "$class\::resultset", sub { $rs } );
+                    subname( "$rowclass\::resultset", sub { $rs } );
                 };
-                undef &{ "$class\::rs" };
-                *{ "$class\::rs" }  = *{ "$class\::resultset" };
-                @{ "$class\::ISA" } = (
-                    'DBIx::Squirrel::ResultSet::Result',
-                );
+                undef &{ "$rowclass\::rs" };
+                *{ "$rowclass\::rs" }  = *{ "$rowclass\::resultset" };
+                @{ "$rowclass\::ISA" } = ( $resultclass );
             }
-            bless shift, $class;
+            $rowclass->new( $_[ 0 ] );
         } else {
             undef;
         }
@@ -66,9 +71,9 @@ sub remaining {
     if ( @{ $rows } ) {
         $self->_bless_row( $rows->[ 0 ] );
         if ( @{ $rows } > 1 ) {
-            my $class = ref $rows->[ 0 ];
+            my $rowclass = ref $rows->[ 0 ];
             for my $row ( @{ $rows }[ 1 .. $#{ $rows } ] ) {
-                bless $row, $class;
+                bless $row, $rowclass;
             }
         }
     }
