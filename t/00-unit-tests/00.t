@@ -941,22 +941,7 @@ sub test_the_basics {
     );
 
     ( $exp, $got ) = (
-        bless( { MaxRows => 10, Slice => {} }, 'DBIx::Squirrel::ResultSet' ),
-        do {
-            my $sth = $standard_ekorn_dbh->prepare(
-                join ' ', (
-                    'SELECT *',
-                    'FROM media_types',
-                )
-            )->reset( {} );
-            $sth->resultset;
-        },
-    );
-    is_deeply $exp, $got, 'resultset'
-      or dump_val { exp => $exp, got => $got };
-
-    ( $exp, $got ) = (
-        bless( { MaxRows => 10, Slice => {} }, 'DBIx::Squirrel::ResultSet' ),
+        bless( { MaxRows => 100, Slice => {} }, 'DBIx::Squirrel::ResultSet' ),
         do {
             my $sth = $standard_ekorn_dbh->prepare(
                 join ' ', (
@@ -964,29 +949,14 @@ sub test_the_basics {
                     'FROM media_types',
                 )
             );
-            $sth->resultset->reset( {} );
+            $sth->resultset->reset( {}, 100 );
         },
     );
     is_deeply $exp, $got, 'resultset'
       or dump_val { exp => $exp, got => $got };
 
     ( $exp, $got ) = (
-        bless( { MaxRows => 10, Slice => [] }, 'DBIx::Squirrel::ResultSet' ),
-        do {
-            my $sth = $standard_ekorn_dbh->prepare(
-                join ' ', (
-                    'SELECT *',
-                    'FROM media_types',
-                )
-            )->reset( [] );
-            $sth->resultset;
-        },
-    );
-    is_deeply $exp, $got, 'resultset'
-      or dump_val { exp => $exp, got => $got };
-
-    ( $exp, $got ) = (
-        bless( { MaxRows => 10, Slice => [] }, 'DBIx::Squirrel::ResultSet' ),
+        bless( { MaxRows => 100, Slice => [] }, 'DBIx::Squirrel::ResultSet' ),
         do {
             my $sth = $standard_ekorn_dbh->prepare(
                 join ' ', (
@@ -994,7 +964,7 @@ sub test_the_basics {
                     'FROM media_types',
                 )
             );
-            $sth->resultset->reset( [] );
+            $sth->resultset->reset( [], 100 );
         },
     );
     is_deeply $exp, $got, 'resultset'
