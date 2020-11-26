@@ -1043,9 +1043,8 @@ sub test_the_basics {
 $sth = $standard_ekorn_dbh->prepare(<<';');
   SELECT MediaTypeId, Name FROM media_types
 ;
-$rs = $sth->resultset( sub { $_->name } );
-#diag $_ for $rs->remaining;
-diag $_ for $rs->all;
+$rs = $sth->resultset();
+diag Dumper($_) for $rs->all;
 
     $standard_ekorn_dbh->disconnect;
     $standard_dbi_dbh->disconnect;
