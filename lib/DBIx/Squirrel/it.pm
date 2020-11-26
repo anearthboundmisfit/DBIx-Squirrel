@@ -54,6 +54,10 @@ sub DESTROY {
 
 sub new {
     $_ = do {
+        my @cb;
+        while ( ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE' ) {
+            unshift @cb, pop;
+        }
         my $class = ref $_[ 0 ] ? ref shift : shift;
         my $sth   = shift;
         if ( ref $sth && blessed( $sth ) && $sth->isa( 'DBI::st' ) ) {
@@ -63,6 +67,7 @@ sub new {
                 st => $sth,
                 id => $id,
                 bp => \@_,
+                cb => \@cb,
                 sl => $self->_set_slice->{ Slice },
                 mr => $self->_set_max_rows->{ MaxRows },
             };
@@ -209,7 +214,29 @@ sub _get_row {
             }
         }
     };
-    return $row;
+    return do {
+        if ( @{ $c->{ cb } } ) {
+            $self->_transform( $row );
+        } else {
+            $row;
+        }
+    };
+}
+
+sub _transform {
+    my ( $c, $self ) = shift->_private;
+    return do {
+        if ( defined $_[ 0 ] ) {
+            local ( $_ );
+            my $row = $_[ 0 ];
+            for my $cb ( @{ $c->{ cb } } ) {
+                $row = $cb->( $_ = $row );
+            }
+            $row;
+        } else {
+            undef;
+        }
+    };
 }
 
 sub execute {
@@ -344,8 +371,15 @@ sub remaining {
         if ( $c->{ fi } || ( !$c->{ ex } && !$self->execute ) ) {
             undef;
         } else {
+            local ( $_ );
             while ( $self->_charge_buffer ) { ; }
-            my $rows = $c->{ bu };
+            my $rows = do {
+                if ( @{ $self->_private->{ cb } } ) {
+                    [ map { $self->_transform( $_ ) } @{ $c->{ bu } } ];
+                } else {
+                    $c->{ bu };
+                }
+            };
             $c->{ rc } = $c->{ rf };
             $c->{ bu } = undef;
             $self->reset;

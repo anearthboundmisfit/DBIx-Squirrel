@@ -26,16 +26,6 @@ sub DESTROY {
     return $self->SUPER::DESTROY;
 }
 
-sub new {
-    my @cb;
-    while ( ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE' ) {
-        unshift @cb, pop;
-    }
-    my $self = shift->SUPER::new( @_ );
-    $self->_private->{ cb } = \@cb;
-    return $self;
-}
-
 sub resultclass { 'DBIx::Squirrel::ResultClass' }
 
 sub rowclass {
@@ -46,31 +36,31 @@ sub rowclass {
 }
 
 sub _get_row {
-    my $self = shift;
-    my $row  = $self->SUPER::_get_row;
+    my ( $c, $self ) = shift->_private;
+    my $row = do {
+        if ( $c->{ fi } || ( !$c->{ ex } && !$self->execute ) ) {
+            undef;
+        } else {
+            if ( $self->_buffer_empty ) {
+                $self->_charge_buffer;
+            }
+            if ( $self->_buffer_empty ) {
+                $c->{ fi } = 1;
+                undef;
+            } else {
+                $c->{ rc } += 1;
+                shift @{ $c->{ bu } };
+            }
+        }
+    };
     return do {
-        if ( @{ $self->_private->{ cb } } ) {
+        if ( @{ $c->{ cb } } ) {
             $self->_transform( $self->_bless( $row ) );
         } else {
             $self->_bless( $row );
         }
     };
-}
-
-sub _transform {
-    my ( $private, $self ) = shift->_private;
-    return do {
-        if ( defined $_[ 0 ] ) {
-            local ( $_ );
-            my $row = $_[ 0 ];
-            for my $cb ( @{ $private->{ cb } } ) {
-                $row = $cb->( $_ = $row );
-            }
-            $row;
-        } else {
-            undef;
-        }
-    };
+    return $row;
 }
 
 sub _bless {
@@ -97,14 +87,29 @@ sub _bless {
 }
 
 sub remaining {
-    my ( $rowclass, $self ) = shift->rowclass;
+    my ( $c, $self ) = shift->_private;
     $_ = do {
-        local ( $_ );
-        my $rows = $self->SUPER::remaining( @_ );
-        if ( @{ $self->_private->{ cb } } ) {
-            [ map { $self->_transform( $self->_bless( $_ ) ) } @{ $rows } ];
+        if ( $c->{ fi } || ( !$c->{ ex } && !$self->execute ) ) {
+            undef;
         } else {
-            [ map { $self->_bless( $_ ) } @{ $rows } ];
+            local ( $_ );
+            while ( $self->_charge_buffer ) { ; }
+            my $rowclass = $self->rowclass;
+            my $rows     = do {
+                if ( @{ $self->_private->{ cb } } ) {
+                    [
+                        map { $self->_transform( $self->_bless( $_ ) ) } (
+                            @{ $c->{ bu } },
+                        ),
+                    ];
+                } else {
+                    [ map { $self->_bless( $_ ) } @{ $c->{ bu } } ];
+                }
+            };
+            $c->{ rc } = $c->{ rf };
+            $c->{ bu } = undef;
+            $self->reset;
+            $rows;
         }
     };
     return wantarray ? @{ $_ } : $_;
