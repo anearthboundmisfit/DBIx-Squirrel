@@ -154,8 +154,8 @@ while ($rs->next) {
   print $_->name, "\n";
 }
 
-# Use callbacks tp declare how result set and iterator methods
-# should transform or otherwise process rows prior to returning
+# Use callbacks to declare how result set and iterator methods
+# should transform, or otherwise process, rows prior to returning
 # a result to the caller.
 #
 $it = $sth->it(
