@@ -1043,8 +1043,11 @@ sub test_the_basics {
 $sth = $standard_ekorn_dbh->prepare(<<';');
   SELECT MediaTypeId, Name FROM media_types
 ;
-$rs = $sth->resultset();
-diag Dumper($_) for $rs->all;
+$rs = $sth->rs(sub { $_->Name } => sub { "Media type: $_" });
+diag "$_\n" while $rs->next;
+
+$it = $sth->it(sub { $_->{Name} })->reset({});
+diag "$_\n" foreach $it->all;
 
     $standard_ekorn_dbh->disconnect;
     $standard_dbi_dbh->disconnect;

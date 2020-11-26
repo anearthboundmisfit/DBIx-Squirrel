@@ -149,10 +149,29 @@ $row = $itr->find({id=>'1001100'});
 # case-sensitive.
 #
 $sth = $dbh->prepare('SELECT MediaTypeId, Name FROM media_types');
-$res = $sth->resultset;
-while ($res->next) {
+$rs  = $sth->resultset;
+while ($rs->next) {
   print $_->name, "\n";
 }
+
+# Use callbacks tp declare how result set and iterator methods
+# should transform or otherwise process rows prior to returning
+# a result to the caller.
+#
+$it = $sth->it(
+  sub { $_->{Name} }
+)->reset({});
+print "$_\n" foreach $it->all;
+
+# Create callback chains, too.
+#
+$rs = $sth->rs(
+  sub { $_->Name },
+  sub { "Media type: $_" },
+);
+print "$_\n" while $rs->next;
+
+
 ```
 
 ## Description
