@@ -171,7 +171,11 @@ $rs = $sth->rs(
 );
 print "$_\n" while $rs->next;
 
-
+print "$_\n" foreach $dbh->rs(
+  'SELECT MediaTypeId, Name FROM media_types',
+  sub { $_->Name },
+  sub { "Media type: $_" },
+)->all;
 ```
 
 ## Description

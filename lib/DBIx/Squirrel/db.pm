@@ -149,6 +149,10 @@ sub iterate {
                     if ( my $sth = $dbh->prepare( $statement ) ) {
                         $sth->iterate( @_ );
                     }
+                } elsif ( reftype( $_[ 0 ] ) eq 'CODE' ) {
+                    if ( my $sth = $dbh->prepare( $statement ) ) {
+                        $sth->iterate( @_ );
+                    }
                 } else {
                     throw 'Expected a reference to a HASH or ARRAY';
                 }
@@ -183,6 +187,10 @@ sub resultset {
                         $sth->resultset( @_ );
                     }
                 } elsif ( reftype( $_[ 0 ] ) eq 'ARRAY' ) {
+                    if ( my $sth = $dbh->prepare( $statement ) ) {
+                        $sth->resultset( @_ );
+                    }
+                }  elsif ( reftype( $_[ 0 ] ) eq 'CODE' ) {
                     if ( my $sth = $dbh->prepare( $statement ) ) {
                         $sth->resultset( @_ );
                     }
