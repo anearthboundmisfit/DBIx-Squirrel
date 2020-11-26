@@ -179,7 +179,7 @@ print "$_\n" foreach $dbh->rs(
 ```
 
 ## Description
-Just what the world needs, another Perl module for working with databases.
+Just what the world needs: another Perl module for working with databases.
 
 DBIx-Squirrel is a DBI extension. It subclasses the venerable DBI package (and other packages within that namespace), making a few enhancements to its ancestor's interface.
 
