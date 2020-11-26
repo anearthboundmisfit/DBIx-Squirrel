@@ -1049,6 +1049,12 @@ diag "$_\n" while $rs->next;
 $it = $sth->it(sub { $_->{Name} })->reset({});
 diag "$_\n" foreach $it->all;
 
+diag "$_\n" foreach $standard_ekorn_dbh->rs(
+  'SELECT MediaTypeId, Name FROM media_types',
+  sub { $_->Name },
+  sub { "Media type: $_" },
+)->all;
+
     $standard_ekorn_dbh->disconnect;
     $standard_dbi_dbh->disconnect;
 
