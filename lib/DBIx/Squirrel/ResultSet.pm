@@ -31,7 +31,7 @@ sub resultclass { 'DBIx::Squirrel::ResultClass' }
 sub rowclass {
     my $self        = $_[ 0 ];
     my $resultclass = $self->resultclass;
-    my $rowclass    = sprintf '%s_0x%x', $resultclass, 0+ $self;
+    my $rowclass    = sprintf 'Row_0x%x', 0+ $self;
     return wantarray ? ( $rowclass, $self ) : $rowclass;
 }
 
