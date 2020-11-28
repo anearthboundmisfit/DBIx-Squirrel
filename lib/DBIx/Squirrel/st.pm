@@ -74,9 +74,9 @@ sub execute {
 }
 
 sub bind {
-    my ( $priv, $sth ) = shift->_private;
+    my ( $p, $sth ) = shift->_private;
     if ( @_ ) {
-        my $order = $priv->{ params };
+        my $order = $p->{ params };
         if ( $order || ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) ) {
             my %kv = _format_params( $order, @_ );
             while ( my ( $k, $v ) = each %kv ) {
@@ -143,10 +143,10 @@ sub _order_of_placeholders_if_positional {
 }
 
 sub bind_param {
-    my ( $priv, $sth ) = shift->_private;
+    my ( $p, $sth ) = shift->_private;
     my $param = shift;
     my %b;
-    if ( my $order = $priv->{ params } ) {
+    if ( my $order = $p->{ params } ) {
         if ( $param =~ m/^([\:\$\?]?(\d+))$/ ) {
             $sth->DBI::st::bind_param( $2, ( $b{ $2 } = shift ) );
         } else {
