@@ -14,7 +14,7 @@ use namespace::autoclean;
 use Scalar::Util 'reftype', 'weaken';
 use Sub::Name 'subname';
 use DBIx::Squirrel::it;
-use DBIx::Squirrel::Result;
+use DBIx::Squirrel::ResultClass;
 
 sub DESTROY {
     return if ${^GLOBAL_PHASE} eq 'DESTRUCT';
@@ -26,36 +26,36 @@ sub DESTROY {
     return $self->SUPER::DESTROY;
 }
 
-sub resultclass { 'DBIx::Squirrel::Result' }
+sub resultclass { 'DBIx::Squirrel::ResultClass' }
 
 sub rowclass {
     my $self        = $_[ 0 ];
     my $resultclass = $self->resultclass;
-    my $rowclass    = sprintf '%s_0x%x', $resultclass, 0+ $self;
+    my $rowclass    = sprintf 'Row_0x%x', 0+ $self;
     return wantarray ? ( $rowclass, $self ) : $rowclass;
 }
 
 sub _get_row {
-    my ( $c, $self ) = shift->_private;
+    my ( $p, $self ) = shift->_private;
     my $row = do {
-        if ( $c->{ fi } || ( !$c->{ ex } && !$self->execute ) ) {
+        if ( $p->{ fi } || ( !$p->{ ex } && !$self->execute ) ) {
             undef;
         } else {
             if ( $self->_buffer_empty ) {
                 $self->_charge_buffer;
             }
             if ( $self->_buffer_empty ) {
-                $c->{ fi } = 1;
+                $p->{ fi } = 1;
                 undef;
             } else {
-                $c->{ rc } += 1;
-                shift @{ $c->{ bu } };
+                $p->{ rc } += 1;
+                shift @{ $p->{ bu } };
             }
         }
     };
     return do {
-        if ( @{ $c->{ cb } } ) {
-            $self->_transform( $self->_bless( $row ) );
+        if ( @{ $p->{ cb } } ) {
+            $self->transform( $self->_bless( $row ) );
         } else {
             $self->_bless( $row );
         }
@@ -87,9 +87,9 @@ sub _bless {
 }
 
 sub remaining {
-    my ( $c, $self ) = shift->_private;
+    my ( $p, $self ) = shift->_private;
     $_ = do {
-        if ( $c->{ fi } || ( !$c->{ ex } && !$self->execute ) ) {
+        if ( $p->{ fi } || ( !$p->{ ex } && !$self->execute ) ) {
             undef;
         } else {
             local ( $_ );
@@ -98,16 +98,16 @@ sub remaining {
             my $rows     = do {
                 if ( @{ $self->_private->{ cb } } ) {
                     [
-                        map { $self->_transform( $self->_bless( $_ ) ) } (
-                            @{ $c->{ bu } },
+                        map { $self->transform( $self->_bless( $_ ) ) } (
+                            @{ $p->{ bu } },
                         ),
                     ];
                 } else {
-                    [ map { $self->_bless( $_ ) } @{ $c->{ bu } } ];
+                    [ map { $self->_bless( $_ ) } @{ $p->{ bu } } ];
                 }
             };
-            $c->{ rc } = $c->{ rf };
-            $c->{ bu } = undef;
+            $p->{ rc } = $p->{ rf };
+            $p->{ bu } = undef;
             $self->reset;
             $rows;
         }

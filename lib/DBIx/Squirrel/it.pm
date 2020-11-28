@@ -81,16 +81,16 @@ sub new {
 }
 
 sub _set_slice {
-    my ( $c, $self ) = shift->_private;
+    my ( $p, $self ) = shift->_private;
     $self->{ Slice } = do {
         if ( @_ ) {
             if ( ref $_[ 0 ] && reftype( $_[ 0 ] ) =~ m/^ARRAY|HASH$/ ) {
-                $c->{ sl } = shift;
+                $p->{ sl } = shift;
             } else {
                 throw E_BAD_SLICE;
             }
         } else {
-            $c->{ sl } = $DEFAULT_SLICE;
+            $p->{ sl } = $DEFAULT_SLICE;
         }
     };
     return $self;
@@ -128,54 +128,62 @@ sub _private {
 }
 
 sub _set_max_rows {
-    my ( $c, $self ) = shift->_private;
+    my ( $p, $self ) = shift->_private;
     $self->{ MaxRows } = do {
         if ( @_ ) {
             if ( defined $_[ 0 ] && !ref $_[ 0 ] && int $_[ 0 ] > 0 ) {
-                $c->{ mr } = int shift;
+                $p->{ mr } = int shift;
             } else {
                 throw E_BAD_MAX_ROWS;
             }
         } else {
-            $c->{ mr } = $DEFAULT_MAX_ROWS;
+            $p->{ mr } = $DEFAULT_MAX_ROWS;
         }
     };
     return $self;
 }
 
 sub _finish {
-    my ( $c, $self ) = shift->_private;
-    if ( my $sth = $c->{ st } ) {
+    my ( $p, $self ) = shift->_private;
+    if ( my $sth = $p->{ st } ) {
         $sth->finish if $sth->{ Active };
     }
-    $c->{ ex } = undef;
-    $c->{ fi } = undef;
-    $c->{ bu } = undef;
-    $c->{ bx } = $DEFAULT_MAX_ROWS;
-    $c->{ bm } = do {
+    $p->{ ex } = undef;
+    $p->{ fi } = undef;
+    $p->{ bu } = undef;
+    $p->{ bx } = $DEFAULT_MAX_ROWS;
+    $p->{ bm } = do {
         if ( $BUF_MULTIPLIER >= 0 && $BUF_MULTIPLIER < 11 ) {
             $BUF_MULTIPLIER;
         } else {
             0;
         }
     };
-    $c->{ bl } = ( $BUF_MAX_SIZE > 0 ) ? $BUF_MAX_SIZE : $c->{ bx };
-    $c->{ rf } = 0;
-    $c->{ rc } = 0;
+    $p->{ bl } = do {
+        if ( $BUF_MAX_SIZE > 0 ) {
+            $BUF_MAX_SIZE;
+        } else {
+            $p->{ bx };
+        }
+    };
+    $p->{ rf } = 0;
+    $p->{ rc } = 0;
     return $self;
 }
 
 sub first {
-    my ( $c, $self ) = shift->_private;
+    my ( $p, $self ) = shift->_private;
     $_ = do {
-        $self->reset( @_ );
+        if ( @_ || $p->{ ex } || $p->{ st }->{ Active } ) {
+            $self->reset( @_ );
+        }
         $self->_get_row;
     };
     return $_;
 }
 
 sub reset {
-    my ( $c, $self ) = shift->_private;
+    my ( $p, $self ) = shift->_private;
     if ( @_ ) {
         if ( ref $_[ 0 ] ) {
             $self->_set_slice( shift );
@@ -197,64 +205,49 @@ sub reset {
 }
 
 sub _get_row {
-    my ( $c, $self ) = shift->_private;
+    my ( $p, $self ) = shift->_private;
     my $row = do {
-        if ( $c->{ fi } || ( !$c->{ ex } && !$self->execute ) ) {
+        if ( $p->{ fi } || ( !$p->{ ex } && !$self->execute ) ) {
             undef;
         } else {
+            $self->_charge_buffer if $self->_buffer_empty;
             if ( $self->_buffer_empty ) {
-                $self->_charge_buffer;
-            }
-            if ( $self->_buffer_empty ) {
-                $c->{ fi } = 1;
+                $p->{ fi } = 1;
                 undef;
             } else {
-                $c->{ rc } += 1;
-                shift @{ $c->{ bu } };
+                $p->{ rc } += 1;
+                shift @{ $p->{ bu } };
             }
         }
     };
     return do {
-        if ( @{ $c->{ cb } } ) {
-            $self->_transform( $row );
+        if ( @{ $p->{ cb } } ) {
+            $self->transform( $row );
         } else {
             $row;
-        }
-    };
-}
-
-sub _transform {
-    my ( $c, $self ) = shift->_private;
-    return do {
-        if ( defined $_[ 0 ] ) {
-            local ( $_ );
-            my $row = $_[ 0 ];
-            for my $cb ( @{ $c->{ cb } } ) {
-                $row = $cb->( $_ = $row );
-            }
-            $row;
-        } else {
-            undef;
         }
     };
 }
 
 sub execute {
-    my ( $c, $self ) = shift->_private;
+    my ( $p, $self ) = shift->_private;
     $_ = do {
-        if ( my $sth = $c->{ st } ) {
-            if ( $c->{ ex } || $c->{ fi } ) {
+        if ( my $sth = $p->{ st } ) {
+            if ( $p->{ ex } || $p->{ fi } ) {
                 $self->reset;
             }
-            if ( $sth->execute( @_ ? @_ : @{ $c->{ bp } } ) ) {
-                if ( my $row_count = $self->_charge_buffer ) {
-                    $c->{ ex } = 1;
-                    $row_count;
+            if ( $sth->execute( @_ ? @_ : @{ $p->{ bp } } ) ) {
+                $p->{ ex } = 1;
+                if ( $sth->{ NUM_OF_FIELDS } ) {
+                    my $count = $self->_charge_buffer;
+                    $p->{ fi } = $count ? 0 : 1;
+                    $count;
                 } else {
-                    undef;
+                    $p->{ fi } = 1;
+                    0;
                 }
             } else {
-                $c->{ ex } = undef;
+                $p->{ ex } = undef;
             }
         } else {
             undef;
@@ -264,35 +257,33 @@ sub execute {
 }
 
 sub _charge_buffer {
-    my $c   = $_[ 0 ]->_private;
-    my $sth = $c->{ st };
+    my $p   = $_[ 0 ]->_private;
+    my $sth = $p->{ st };
     return unless $sth && $sth->{ Active };
     my $res = do {
-        if ( my $rows = $sth->fetchall_arrayref( $c->{ sl }, $c->{ mr } ) ) {
-            if ( $c->{ bm } ) {
+        if ( my $rows = $sth->fetchall_arrayref( $p->{ sl }, $p->{ mr } ) ) {
+            if ( $p->{ bm } ) {
                 my $candidate_mr = do {
-                    if ( $c->{ bm } > 1 ) {
-                        $c->{ bm } * $c->{ mr };
+                    if ( $p->{ bm } > 1 ) {
+                        $p->{ bm } * $p->{ mr };
                     } else {
-                        $c->{ bx } + $c->{ mr };
+                        $p->{ bx } + $p->{ mr };
                     }
                 };
-                if ( $c->{ bl } >= $candidate_mr ) {
-                    $c->{ mr } = $candidate_mr;
+                if ( $p->{ bl } >= $candidate_mr ) {
+                    $p->{ mr } = $candidate_mr;
                 }
             }
-            $c->{ bu } = do {
-                if ( $c->{ bu } ) {
-                    [ @{ $c->{ bu } }, @{ $rows } ];
+            $p->{ bu } = do {
+                if ( $p->{ bu } ) {
+                    [ @{ $p->{ bu } }, @{ $rows } ];
                 } else {
                     $rows;
                 }
             };
-            my $count = @{ $rows };
-            $c->{ rf } += $count;
-            $count;
+            $p->{ rf } += @{ $rows };
         } else {
-            $c->{ fi } = 1;
+            $p->{ fi } = 1;
             undef;
         }
     };
@@ -300,18 +291,35 @@ sub _charge_buffer {
 }
 
 sub _buffer_empty {
-    my $c = $_[ 0 ]->_private;
+    my $p = $_[ 0 ]->_private;
     return do {
-        if ( $c->{ bu } ) {
-            1 if @{ $c->{ bu } } < 1;
+        if ( $p->{ bu } ) {
+            1 if @{ $p->{ bu } } < 1;
         } else {
             1;
         }
     };
 }
 
+sub transform {
+    my ( $p, $self ) = shift->_private;
+    $_ = do {
+        if ( defined $_[ 0 ] ) {
+            local ( $_ );
+            my $row = $_[ 0 ];
+            for my $cb ( @{ $p->{ cb } } ) {
+                $row = $cb->( $_ = $row );
+            }
+            $row;
+        } else {
+            undef;
+        }
+    };
+    return $_;
+}
+
 sub single {
-    my $self = shift;
+    my ( $p, $self ) = shift->_private;
     $_ = do {
         my $res = do {
             if ( my $row_count = $self->execute( @_ ) ) {
@@ -330,7 +338,7 @@ sub single {
 }
 
 sub find {
-    my $self = shift;
+    my ( $p, $self ) = shift->_private;
     $_ = do {
         my $res = do {
             if ( my $row_count = $self->execute( @_ ) ) {
@@ -350,7 +358,7 @@ sub count {
 }
 
 sub all {
-    my $self = shift;
+    my ( $p, $self ) = shift->_private;
     $_ = do {
         my $res = do {
             if ( $self->execute( @_ ) ) {
@@ -366,22 +374,22 @@ sub all {
 }
 
 sub remaining {
-    my ( $c, $self ) = shift->_private;
+    my ( $p, $self ) = shift->_private;
     $_ = do {
-        if ( $c->{ fi } || ( !$c->{ ex } && !$self->execute ) ) {
+        if ( $p->{ fi } || ( !$p->{ ex } && !$self->execute ) ) {
             undef;
         } else {
             local ( $_ );
             while ( $self->_charge_buffer ) { ; }
             my $rows = do {
                 if ( @{ $self->_private->{ cb } } ) {
-                    [ map { $self->_transform( $_ ) } @{ $c->{ bu } } ];
+                    [ map { $self->transform( $_ ) } @{ $p->{ bu } } ];
                 } else {
-                    $c->{ bu };
+                    $p->{ bu };
                 }
             };
-            $c->{ rc } = $c->{ rf };
-            $c->{ bu } = undef;
+            $p->{ rc } = $p->{ rf };
+            $p->{ bu } = undef;
             $self->reset;
             $rows;
         }

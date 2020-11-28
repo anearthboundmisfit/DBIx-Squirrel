@@ -85,12 +85,13 @@ sub test_prepare_execute_fetch_single_row {
     is $res, '0E0', 'execute';
     diag_result $sth;
 
+    $it = $sth->iterate;
+
     ( $exp, $got ) = (
         $arrayrefs[ 0 ],
         do {
-            $sth->execute;
             ( $stderr, $row ) = capture_stderr { 
-                $sth->iterate->single;
+                $it->single;
             };
             $row;
         },

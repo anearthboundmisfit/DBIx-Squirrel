@@ -105,12 +105,13 @@ sub test_prepare_execute_fetch_multiple_rows {
     is $res, '0E0', 'execute';
     diag_result $sth;
 
+    $it = $sth->it;
+
     ( $exp, $got ) = (
         $arrayrefs[ 0 ],
         do {
-            $sth->execute;
-            ( $stderr, $row ) = capture_stderr {
-                $sth->it->single;
+           ( $stderr, $row ) = capture_stderr {
+                $it->single;
             };
             $row;
         },
@@ -126,12 +127,13 @@ sub test_prepare_execute_fetch_multiple_rows {
     is_deeply $exp, $got, 'remaining yields complete set'
       or dump_val { exp => $exp, got => $got };
 
+    $it = $sth->it;
+
     ( $exp, $got ) = (
         $arrayrefs[ 0 ],
         do {
-            $sth->execute;
             ( $stderr, $row ) = capture_stderr {
-                $sth->it->single;
+                $it->single;
             };
             $row;
         },
@@ -140,47 +142,51 @@ sub test_prepare_execute_fetch_multiple_rows {
 
     ( $exp, $got ) = (
         [ @arrayrefs ],
-        [ $sth->it->remaining ],
+        [ $it->remaining ],
     );
     is_deeply $exp, $got, 'remaining yields complete set'
       or dump_val { exp => $exp, got => $got };
 
+    $it = $sth->it;
+
     ( $exp, $got ) = (
         $arrayrefs[ 0 ],
-        $sth->it->first,
+        $it->first,
     );
     is_deeply $exp, $got, 'first';
 
     ( $exp, $got ) = (
         [ @arrayrefs[ 1 .. 4 ] ],
-        scalar $sth->it->remaining,
+        scalar $it->remaining,
     );
     is_deeply $exp, $got, 'remaining'
       or dump_val { exp => $exp, got => $got };
 
+    $it = $sth->it;
+
     ( $exp, $got ) = (
         $arrayrefs[ 0 ],
-        $sth->it->first,
+        $it->first,
     );
     is_deeply $exp, $got, 'first';
 
     ( $exp, $got ) = (
         [ @arrayrefs[ 1 .. 4 ] ],
-        [ $sth->it->remaining ],
+        [ $it->remaining ],
     );
     is_deeply $exp, $got, 'remaining'
       or dump_val { exp => $exp, got => $got };
 
     ( $exp, $got ) = (
         [ @arrayrefs ],
-        scalar $sth->it->all,
+        scalar $it->all,
     );
     is_deeply $exp, $got, 'all'
       or dump_val { exp => $exp, got => $got };
 
     ( $exp, $got ) = (
         [ @arrayrefs ],
-        [ $sth->it->all ],
+        [ $it->all ],
     );
     is_deeply $exp, $got, 'all'
       or dump_val { exp => $exp, got => $got };
@@ -188,7 +194,7 @@ sub test_prepare_execute_fetch_multiple_rows {
     ( $exp, $got ) = (
         [ @arrayrefs ],
         do {
-            my $it = $sth->it;
+            $it = $sth->it;
             my @ary;
             while ( my $row = $it->next ) {
                 push @ary, $row;
@@ -202,7 +208,7 @@ sub test_prepare_execute_fetch_multiple_rows {
     ( $exp, $got ) = (
         [ @arrayrefs ],
         do {
-            my $it  = $sth->it;
+            $it  = $sth->it;
             my @ary = $it->first;
             while ( my $row = $it->next ) {
                 push @ary, $row;
@@ -216,7 +222,7 @@ sub test_prepare_execute_fetch_multiple_rows {
     ( $exp, $got ) = (
         [ @hashrefs ],
         do {
-            my $it = $sth->it;
+            $it = $sth->it;
             my @ary;
             $it->reset( {} );
             while ( my $row = $it->next ) {
@@ -231,7 +237,7 @@ sub test_prepare_execute_fetch_multiple_rows {
     ( $exp, $got ) = (
         [ @hashrefs ],
         do {
-            my $it  = $sth->it;
+            $it  = $sth->it;
             my @ary = $it->first( {} );
             while ( my $row = $it->next ) {
                 push @ary, $row;
@@ -245,7 +251,7 @@ sub test_prepare_execute_fetch_multiple_rows {
     ( $exp, $got ) = (
         [ @hashrefs ],
         do {
-            my $it = $sth->it;
+            $it = $sth->it;
             my @ary;
             $it->reset;
             while ( my $row = $it->next( {} ) ) {
@@ -260,7 +266,7 @@ sub test_prepare_execute_fetch_multiple_rows {
     ( $exp, $got ) = (
         [ @hashrefs ],
         do {
-            my $it  = $sth->it;
+            $it  = $sth->it;
             my @ary = $it->first( {} );
             while ( my $row = $it->next ) {
                 push @ary, $row;
