@@ -135,37 +135,37 @@ DBIx::Squirrel - A Perl module for working with databases.
     # other things as statement attributes.
     #
     ($res, $sth) = $dbh->do(
-    'SELECT * FROM product WHERE id = ?', '1001099'
+        'SELECT * FROM product WHERE id = ?', '1001099'
     );
     ($res, $sth) = $dbh->do(
-    'SELECT * FROM product WHERE id = ?', ['1001099']
+        'SELECT * FROM product WHERE id = ?', ['1001099']
     );
     ($res, $sth) = $dbh->do(
-    'SELECT * FROM product WHERE id = :id', ':id'=>'1001099'
+        'SELECT * FROM product WHERE id = :id', ':id'=>'1001099'
     );
     ($res, $sth) = $dbh->do(
-    'SELECT * FROM product WHERE id = :id', id=>'1001099'
+        'SELECT * FROM product WHERE id = :id', id=>'1001099'
     );
     ($res, $sth) = $dbh->do(
-    'SELECT * FROM product WHERE id = :id', [':id'=>'1001099']
+        'SELECT * FROM product WHERE id = :id', [':id'=>'1001099']
     );
     ($res, $sth) = $dbh->do(
-    'SELECT * FROM product WHERE id = :id', [id=>'1001099']
+       'SELECT * FROM product WHERE id = :id', [id=>'1001099']
     );
     ($res, $sth) = $dbh->do( # ------------ undef or \%attr
-    'SELECT * FROM product WHERE id = :id', undef,
-    {':id'=>'1001099'}
+        'SELECT * FROM product WHERE id = :id', undef,
+        {':id'=>'1001099'}
     );
     ($res, $sth) = $dbh->do( # ------------ undef or \%attr
-    'SELECT * FROM product WHERE id = :id', undef,
-    {id=>'1001099'},
+        'SELECT * FROM product WHERE id = :id', undef,
+        {id=>'1001099'},
     );
 
     # Using the iterators couldn't be easier!
     #
     @ary = ();
     while ($next = $itr->next) {
-    push @ary, $next;
+        push @ary, $next;
     }
 
     @ary = $itr->first;
@@ -197,7 +197,7 @@ DBIx::Squirrel - A Perl module for working with databases.
     $sth = $dbh->prepare('SELECT MediaTypeId, Name FROM media_types');
     $rs  = $sth->resultset;
     while ($rs->next) {
-    print $_->name, "\n";
+        print $_->name, "\n";
     }
 
     # Use callbacks to declare how result set and iterator methods
@@ -205,23 +205,23 @@ DBIx::Squirrel - A Perl module for working with databases.
     # a result to the caller.
     #
     $it = $sth->it(
-    sub { $_->{Name} }
+        sub { $_->{Name} }
     )->reset({});
     print "$_\n" foreach $it->all;
 
     # Create callback chains, too.
     #
     $rs = $sth->rs(
-    sub { $_->Name },
-    sub { "Media type: $_" },
+        sub { $_->Name },
+        sub { "Media type: $_" },
     );
     print "$_\n" while $rs->next;
 
     $dbh->rs(
-    q/SELECT MediaTypeId, Name FROM media_types/,
-    sub { $_->Name },
-    sub { "Media type: $_" },
-    sub { print "$_\n"}
+        q/SELECT MediaTypeId, Name FROM media_types/,
+        sub { $_->Name },
+        sub { "Media type: $_" },
+        sub { print "$_\n"}
     )->all;
 
 =head1 DESCRIPTION
