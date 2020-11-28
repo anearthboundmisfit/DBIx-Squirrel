@@ -1,7 +1,8 @@
 use strict;
 use warnings;
 
-package DBIx::Squirrel::util;
+package    # hide from PAUSE
+  DBIx::Squirrel::util;
 
 ## no critic (TestingAndDebugging::ProhibitNoStrict)
 

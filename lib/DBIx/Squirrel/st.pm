@@ -1,7 +1,8 @@
 use strict;
 use warnings;
 
-package DBIx::Squirrel::st;
+package    # hide from PAUSE
+  DBIx::Squirrel::st;
 
 ## no critic (TestingAndDebugging::ProhibitNoStrict)
 
@@ -178,7 +179,7 @@ sub iterate { DBIx::Squirrel::it->new( shift, @_ ) }
 sub resultset { DBIx::Squirrel::ResultSet->new( shift, @_ ) }
 
 sub iterator {
-    $_[0]->_private->{ itor };
+    $_[ 0 ]->_private->{ itor };
 }
 
 BEGIN {
