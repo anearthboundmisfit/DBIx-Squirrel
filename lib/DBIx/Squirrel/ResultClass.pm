@@ -22,27 +22,52 @@ sub resultclass { $_[ 0 ]->resultset->resultclass }
 
 sub rowclass { $_[ 0 ]->resultset->rowclass }
 
+sub get_column {
+    my $self = $_[ 0 ];
+    my $name = ( $_[ 1 ] // '' );
+    $_ = do {
+        if ( reftype( $self ) eq 'ARRAY' ) {
+            my $sth = $self->resultset->sth
+              or throw 'Statement has expired';
+            my $index = $sth->{ NAME_lc_hash }{ lc $name }
+              or throw 'Unrecognised column (%s)', ( $name // '' );
+            $self->[ $index ];
+        } elsif ( reftype( $self ) eq 'HASH' ) {
+            if ( exists $self->{ $name } ) {
+                shift->{ $name };
+            } else {
+                local ( $_ );
+                my ( $index ) = grep { lc eq $name } keys %{ $self };
+                throw 'Unrecognised column (%s)', ( $name // '' )
+                  unless defined $index;
+                shift->{ $index };
+            }
+        } else {
+            throw 'Object is not a blessed array or hash reference';
+        }
+    };
+    return $_;
+}
+
 sub AUTOLOAD {
     ( my $name = $AUTOLOAD ) =~ s/.*:://;
     return if $name eq 'DESTROY';
     my ( $self, $class ) = ( $_[ 0 ], ref $_[ 0 ] );
     my $closure = do {
         if ( reftype( $self ) eq 'ARRAY' ) {
-            my $sth   = $self->resultset->sth;
-            my $index = $sth->{ NAME_lc_hash }{ lc $name };
-            unless ( defined $index ) {
-                throw 'Unrecognised column name (%s)', $name;
-            }
-            sub { shift->[ $index ] };
+            my $sth = $self->resultset->sth
+              or throw 'Statement has expired';
+            my $index = $sth->{ NAME_lc_hash }{ lc $name }
+              or throw 'Unrecognised column (%s)', ( $name // '' );
+            sub { $self->[ $index ] };
         } elsif ( reftype( $self ) eq 'HASH' ) {
             if ( exists $self->{ $name } ) {
                 sub { shift->{ $name } };
             } else {
                 local ( $_ );
-                my ( $index ) = grep { $name eq lc } keys %{ $self };
-                unless ( defined $index ) {
-                    throw 'Unrecognised column name (%s)', $name;
-                }
+                my ( $index ) = grep { lc eq $name } keys %{ $self };
+                throw 'Unrecognised column (%s)', ( $name // '' )
+                  unless defined $index;
                 sub { shift->{ $index } };
             }
         } else {
@@ -50,8 +75,7 @@ sub AUTOLOAD {
         }
     };
     no strict 'refs';
-    my $symbol = "$class\::$name";
-    *{ $symbol } = subname( $symbol, $closure );
+    *{ "$class\::$name" } = subname( "$class\::$name", $closure );
     goto &{ $closure };
 }
 
