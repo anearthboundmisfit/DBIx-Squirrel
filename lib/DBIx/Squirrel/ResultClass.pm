@@ -58,7 +58,7 @@ sub AUTOLOAD {
             my $sth = $self->resultset->sth
               or throw 'Statement has expired';
             my $index = $sth->{ NAME_lc_hash }{ lc $name }
-              or throw 'Unrecognised column (%s)', ( $name // '' );
+              or throw 'Unrecognised column (%s)', $name;
             sub { $self->[ $index ] };
         } elsif ( reftype( $self ) eq 'HASH' ) {
             if ( exists $self->{ $name } ) {
@@ -66,7 +66,7 @@ sub AUTOLOAD {
             } else {
                 local ( $_ );
                 my ( $index ) = grep { lc eq $name } keys %{ $self };
-                throw 'Unrecognised column (%s)', ( $name // '' )
+                throw 'Unrecognised column (%s)', $name
                   unless defined $index;
                 sub { shift->{ $index } };
             }
