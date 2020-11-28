@@ -1,7 +1,8 @@
 use strict;
 use warnings;
 
-package DBIx::Squirrel::db;
+package    # hide from PAUSE
+  DBIx::Squirrel::db;
 
 ## no critic (TestingAndDebugging::ProhibitNoStrict)
 
@@ -179,7 +180,7 @@ sub iterate {
 sub resultset {
     my $dbh       = shift;
     my $statement = shift;
-    my $rs= do {
+    my $rs        = do {
         if ( @_ ) {
             if ( ref $_[ 0 ] ) {
                 if ( reftype( $_[ 0 ] ) eq 'HASH' ) {
@@ -190,7 +191,7 @@ sub resultset {
                     if ( my $sth = $dbh->prepare( $statement ) ) {
                         $sth->resultset( @_ );
                     }
-                }  elsif ( reftype( $_[ 0 ] ) eq 'CODE' ) {
+                } elsif ( reftype( $_[ 0 ] ) eq 'CODE' ) {
                     if ( my $sth = $dbh->prepare( $statement ) ) {
                         $sth->resultset( @_ );
                     }
