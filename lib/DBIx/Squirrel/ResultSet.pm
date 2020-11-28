@@ -14,7 +14,7 @@ use namespace::autoclean;
 use Scalar::Util 'reftype', 'weaken';
 use Sub::Name 'subname';
 use DBIx::Squirrel::it;
-use DBIx::Squirrel::Result;
+use DBIx::Squirrel::ResultClass;
 
 sub DESTROY {
     return if ${^GLOBAL_PHASE} eq 'DESTRUCT';
@@ -26,7 +26,7 @@ sub DESTROY {
     return $self->SUPER::DESTROY;
 }
 
-sub resultclass { 'DBIx::Squirrel::Result' }
+sub resultclass { 'DBIx::Squirrel::ResultClass' }
 
 sub rowclass {
     my $self        = $_[ 0 ];
