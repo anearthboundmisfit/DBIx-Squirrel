@@ -402,19 +402,19 @@ sub remaining
 sub next
 {
     $_ = do {
-        my $self = shift;
+        my $self = $_[0];
         if ( @_ ) {
-            if ( ref $_[ 0 ] ) {
-                $self->_set_slice( shift );
+            if ( ref $_[ 1 ] ) {
+                $self->_set_slice( $_[1] );
                 if ( @_ ) {
-                    $self->_set_max_rows( shift );
+                    $self->_set_max_rows( $_[2] );
                 } else {
                     $self->_set_max_rows;
                 }
             } else {
-                $self->_set_max_rows( shift );
+                $self->_set_max_rows( $_[1] );
                 if ( @_ ) {
-                    $self->_set_slice( shift );
+                    $self->_set_slice( $_[2] );
                 } else {
                     $self->_set_slice;
                 }
