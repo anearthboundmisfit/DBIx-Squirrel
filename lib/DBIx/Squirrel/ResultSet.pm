@@ -50,7 +50,7 @@ sub _get_row
                 undef;
             } else {
                 $p->{ rc } += 1;
-                if ( $self->_has_callbacks ) {
+                if ( $self->has_callbacks ) {
                     $self->transform( shift @{ $p->{ bu } } );
                 } else {
                     shift @{ $p->{ bu } };
@@ -92,7 +92,7 @@ sub remaining
             while ( $self->_charge_buffer ) { ; }
             my $rowclass = $self->rowclass;
             my $rows     = do {
-                if ( $self->_has_callbacks ) {
+                if ( $self->has_callbacks ) {
                     [
                         map { $self->transform( $self->_bless( $_ ) ) } (
                             @{ $p->{ bu } },
