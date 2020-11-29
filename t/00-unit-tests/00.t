@@ -994,37 +994,26 @@ sub test_the_basics {
     is_deeply $exp, $got, 'first'
       or dump_val { exp => $exp, got => $got };
 
-    ( $exp, $got ) = ( [
-            bless( [
-                    1,
-                    "MPEG audio file",
-                ],
-                'DBIx::Squirrel::Result'
-            ),
-            bless( [
-                    2,
-                    "Protected AAC audio file",
-                ],
-                'DBIx::Squirrel::Result'
-            ),
-            bless( [
-                    3,
-                    "Protected MPEG-4 video file",
-                ],
-                'DBIx::Squirrel::Result'
-            ),
-            bless( [
-                    4,
-                    "Purchased AAC audio file",
-                ],
-                'DBIx::Squirrel::Result'
-            ),
-            bless( [
-                    5,
-                    "AAC audio file",
-                ],
-                'DBIx::Squirrel::Result'
-            ),
+    ( $exp, $got ) = ( [ [
+                1,
+                "MPEG audio file",
+            ],
+            [
+                2,
+                "Protected AAC audio file",
+            ],
+            [
+                3,
+                "Protected MPEG-4 video file",
+            ],
+            [
+                4,
+                "Purchased AAC audio file",
+            ],
+            [
+                5,
+                "AAC audio file",
+            ],
         ],
         ,
         do {
@@ -1046,9 +1035,9 @@ sub test_the_basics {
 
     $sth->finish;
 
-    $sth = $standard_ekorn_dbh->prepare( <<';');
-  SELECT MediaTypeId, Name FROM media_types
-;
+    $sth = $standard_ekorn_dbh->prepare(
+        'SELECT MediaTypeId, Name FROM media_types',
+    );
     $rs = $sth->rs( sub { $_->get_column( 'Name' ) } => sub { "Media type: $_" }
     );
     diag "$_\n" while $rs->next;
