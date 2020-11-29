@@ -94,7 +94,7 @@ sub _set_slice
             $p->{ sl } = $DEFAULT_SLICE;
         }
     };
-    return $self;
+    $self;
 }
 
 sub _private
@@ -141,7 +141,7 @@ sub _set_max_rows
             $p->{ mr } = $DEFAULT_MAX_ROWS;
         }
     };
-    return $self;
+    $self;
 }
 
 sub _finish
@@ -170,7 +170,7 @@ sub _finish
     };
     $p->{ rf } = 0;
     $p->{ rc } = 0;
-    return $self;
+    $self;
 }
 
 sub first
@@ -403,17 +403,17 @@ sub next
 {
     $_ = do {
         my $self = $_[ 0 ];
-        if ( @_ ) {
+        if ( @_ > 1 ) {
             if ( ref $_[ 1 ] ) {
                 $self->_set_slice( $_[ 1 ] );
-                if ( @_ ) {
+                if ( @_ > 2 ) {
                     $self->_set_max_rows( $_[ 2 ] );
                 } else {
                     $self->_set_max_rows;
                 }
             } else {
                 $self->_set_max_rows( $_[ 1 ] );
-                if ( @_ ) {
+                if ( @_ > 2 ) {
                     $self->_set_slice( $_[ 2 ] );
                 } else {
                     $self->_set_slice;

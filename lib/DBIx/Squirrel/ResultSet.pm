@@ -22,7 +22,7 @@ sub DESTROY
     my $class = $self->resultclass;
     no strict 'refs';
     undef &{ "$class\::resultset" };
-    return $self->SUPER::DESTROY;
+    $self->SUPER::DESTROY;
 } ## use critic
 
 sub class { ref $_[ 0 ] ? ref $_[ 0 ] : $_[ 0 ] }
@@ -35,23 +35,20 @@ sub rowclass
     wantarray ? ( $class, $_[ 0 ] ) : $class;
 }
 
-sub _get_row
-{
+sub _get_row {
     $_ = do {
         my ( $p, $self ) = shift->_private;
         if ( $p->{ fi } || ( !$p->{ ex } && !$self->execute ) ) {
             undef;
         } else {
-            if ( $self->_buffer_empty ) {
-                $self->_charge_buffer;
-            }
-            if ( $self->_buffer_empty ) {
+            $self->charge_buffer if $self->buffer_is_empty;
+            if ( $self->buffer_is_still_empty ) {
                 $p->{ fi } = 1;
                 undef;
             } else {
                 $p->{ rc } += 1;
                 if ( $self->has_callbacks ) {
-                    $self->transform( shift @{ $p->{ bu } } );
+                    $self->transform( $self->_bless( shift @{ $p->{ bu } } ) );
                 } else {
                     shift @{ $p->{ bu } };
                 }
@@ -89,7 +86,7 @@ sub remaining
         if ( $p->{ fi } || ( !$p->{ ex } && !$self->execute ) ) {
             undef;
         } else {
-            while ( $self->_charge_buffer ) { ; }
+            while ( $self->charge_buffer ) { ; }
             my $rowclass = $self->rowclass;
             my $rows     = do {
                 if ( $self->has_callbacks ) {
