@@ -424,8 +424,6 @@ sub next
     };
 }
 
-sub reiterate { shift->sth->reiterate( @_ ) }
-
 sub resultset { shift->sth->resultset( @_ ) }
 
 sub sth { $_[ 0 ]->_private->{ st } }
