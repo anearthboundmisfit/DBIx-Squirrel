@@ -214,13 +214,13 @@ sub _get_row
         if ( $p->{ fi } || ( !$p->{ ex } && !$self->execute ) ) {
             undef;
         } else {
-            $self->_charge_buffer if $self->_buffer_empty;
-            if ( $self->_buffer_empty ) {
+            $self->charge_buffer if $self->buffer_is_empty;
+            if ( $self->buffer_is_still_empty ) {
                 $p->{ fi } = 1;
                 undef;
             } else {
                 $p->{ rc } += 1;
-                if ( $self->_has_callbacks ) {
+                if ( $self->has_callbacks ) {
                     $self->transform( shift @{ $p->{ bu } } );
                 } else {
                     shift @{ $p->{ bu } };
@@ -230,7 +230,7 @@ sub _get_row
     };
 }
 
-sub _has_callbacks { scalar @{ $_[ 0 ]->_private->{ cb } } }
+sub has_callbacks { scalar @{ $_[ 0 ]->_private->{ cb } } }
 
 sub execute
 {
@@ -243,7 +243,7 @@ sub execute
             if ( $sth->execute( @_ ? @_ : @{ $p->{ bp } } ) ) {
                 $p->{ ex } = 1;
                 if ( $sth->{ NUM_OF_FIELDS } ) {
-                    my $count = $self->_charge_buffer;
+                    my $count = $self->charge_buffer;
                     $p->{ fi } = $count ? 0 : 1;
                     $count;
                 } else {
@@ -259,7 +259,7 @@ sub execute
     };
 }
 
-sub _charge_buffer
+sub charge_buffer
 {
     $_ = do {
         my $p   = $_[ 0 ]->_private;
@@ -295,7 +295,7 @@ sub _charge_buffer
     };
 }
 
-sub _buffer_empty
+sub buffer_is_empty
 {
     if ( my $buffer = $_[ 0 ]->_private->{ bu } ) {
         @{ $buffer } ? 0 : 1;
@@ -382,9 +382,9 @@ sub remaining
         if ( $p->{ fi } || ( !$p->{ ex } && !$self->execute ) ) {
             undef;
         } else {
-            while ( $self->_charge_buffer ) { ; }
+            while ( $self->charge_buffer ) { ; }
             my $rows = do {
-                if ( $self->_has_callbacks ) {
+                if ( $self->has_callbacks ) {
                     [ map { $self->transform( $_ ) } @{ $p->{ bu } } ];
                 } else {
                     $p->{ bu };
@@ -402,19 +402,19 @@ sub remaining
 sub next
 {
     $_ = do {
-        my $self = $_[0];
+        my $self = $_[ 0 ];
         if ( @_ ) {
             if ( ref $_[ 1 ] ) {
-                $self->_set_slice( $_[1] );
+                $self->_set_slice( $_[ 1 ] );
                 if ( @_ ) {
-                    $self->_set_max_rows( $_[2] );
+                    $self->_set_max_rows( $_[ 2 ] );
                 } else {
                     $self->_set_max_rows;
                 }
             } else {
-                $self->_set_max_rows( $_[1] );
+                $self->_set_max_rows( $_[ 1 ] );
                 if ( @_ ) {
-                    $self->_set_slice( $_[2] );
+                    $self->_set_slice( $_[ 2 ] );
                 } else {
                     $self->_set_slice;
                 }
@@ -437,11 +437,12 @@ sub done { $_[ 0 ]->_private->{ fi } }
 sub not_done { not $_[ 0 ]->_private->{ fi } }
 
 BEGIN {
-    *resultset = *resultset;
-    *rs        = *resultset;
-    *reit      = *reiterate;
-    *iterate   = *reiterate;
-    *it        = *reiterate;
+    *buffer_is_still_empty = *buffer_is_empty;
+    *resultset             = *resultset;
+    *rs                    = *resultset;
+    *reit                  = *reiterate;
+    *iterate               = *reiterate;
+    *it                    = *reiterate;
 }
 
 1;
