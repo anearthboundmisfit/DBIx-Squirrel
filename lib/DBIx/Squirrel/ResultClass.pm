@@ -3,8 +3,6 @@ use warnings;
 
 package DBIx::Squirrel::ResultClass;
 
-## no critic (TestingAndDebugging::ProhibitNoStrict)
-
 BEGIN {
     *DBIx::Squirrel::ResultClass::VERSION = *DBIx::Squirrel::VERSION;
 }
@@ -14,6 +12,12 @@ use Scalar::Util 'reftype';
 use Sub::Name 'subname';
 use DBIx::Squirrel::util 'throw';
 
+use constant {
+    E_BAD_OBJECT     => 'Object is not a blessed array or hash reference',
+    E_STH_EXPIRED    => 'Result is no longer associated with a statement',
+    E_UNKNOWN_COLUMN => 'Unrecognised column (%s)',
+};
+
 our $AUTOLOAD;
 
 sub new { bless $_[ 1 ], ref $_[ 0 ] || $_[ 0 ] }
@@ -22,63 +26,76 @@ sub resultclass { $_[ 0 ]->resultset->resultclass }
 
 sub rowclass { $_[ 0 ]->resultset->rowclass }
 
-sub get_column {
-    my $self = $_[ 0 ];
-    my $name = ( $_[ 1 ] // '' );
+sub get_column
+{
+    my ( $self, $name ) = ( $_[ 0 ], ( $_[ 1 ] // '' ) );
     $_ = do {
         if ( reftype( $self ) eq 'ARRAY' ) {
             my $sth = $self->resultset->sth
-              or throw 'Statement has expired';
-            my $index = $sth->{ NAME_lc_hash }{ lc $name }
-              or throw 'Unrecognised column (%s)', ( $name // '' );
+              or throw E_STH_EXPIRED;
+            my $index = $sth->{ NAME_lc_hash }{ lc $name };
+            throw E_UNKNOWN_COLUMN, $name unless defined $index;
             $self->[ $index ];
         } elsif ( reftype( $self ) eq 'HASH' ) {
             if ( exists $self->{ $name } ) {
-                shift->{ $name };
+                $self->{ $name };
             } else {
                 local ( $_ );
                 my ( $index ) = grep { lc eq $name } keys %{ $self };
-                throw 'Unrecognised column (%s)', ( $name // '' )
-                  unless defined $index;
-                shift->{ $index };
+                throw E_UNKNOWN_COLUMN, $name unless defined $index;
+                $self->{ $index };
             }
         } else {
-            throw 'Object is not a blessed array or hash reference';
+            throw E_BAD_OBJECT;
         }
     };
-    return $_;
 }
 
-sub AUTOLOAD {
+# AUTOLOAD is called whenever a row object attempts invoke an unknown
+# method. This implementation will try to create an accessor which is then
+# asscoiated with a specific column. There is some initial overhead involved
+# in the accessor's validation and creation. Thereafter, the accessor will
+# respond just like as a normal method. During accessor's creation, AUTOLOAD
+# will decide the best strategy for geting the column's data depending on
+# the underlying row implementation (arrayref or hashref), resulting in
+# an accessor that is always appropriate.
+#
+sub AUTOLOAD
+{ ## no critic (TestingAndDebugging::ProhibitNoStrict)
     ( my $name = $AUTOLOAD ) =~ s/.*:://;
-    return if $name eq 'DESTROY';
-    my ( $self, $class ) = ( $_[ 0 ], ref $_[ 0 ] );
-    my $closure = do {
-        if ( reftype( $self ) eq 'ARRAY' ) {
-            my $sth = $self->resultset->sth
-              or throw 'Statement has expired';
-            my $index = $sth->{ NAME_lc_hash }{ lc $name }
-              or throw 'Unrecognised column (%s)', $name;
-            sub { $self->[ $index ] };
-        } elsif ( reftype( $self ) eq 'HASH' ) {
-            if ( exists $self->{ $name } ) {
-                sub { shift->{ $name } };
+    if ( $name ne 'DESTROY' ) {
+        my ( $self, $class ) = ( $_[ 0 ], ref $_[ 0 ] );
+        my $symbol = "$class\::$name";
+        no strict 'refs';
+        *{ $symbol } = do {
+            if ( reftype( $self ) eq 'ARRAY' ) {
+                my $sth = $self->resultset->sth
+                  or throw E_STH_EXPIRED;
+                my $index = $sth->{ NAME_lc_hash }{ lc $name };
+                throw E_UNKNOWN_COLUMN, $name unless defined $index;
+                subname( $symbol, sub { $_[ 0 ]->[ $index ] } );
+            } elsif ( reftype( $self ) eq 'HASH' ) {
+                if ( exists $self->{ $name } ) {
+                    subname( $symbol, sub { $_[ 0 ]->{ $name } } );
+                } else {
+                    local ( $_ );
+                    my ( $index ) = grep { lc eq $name } keys %{ $self };
+                    throw E_UNKNOWN_COLUMN, $name unless defined $index;
+                    subname( $symbol, sub { $_[ 0 ]->{ $index } } );
+                }
             } else {
-                local ( $_ );
-                my ( $index ) = grep { lc eq $name } keys %{ $self };
-                throw 'Unrecognised column (%s)', $name
-                  unless defined $index;
-                sub { shift->{ $index } };
+                throw E_BAD_OBJECT;
             }
-        } else {
-            throw 'Object is not a blessed array or hash reference';
-        }
-    };
-    no strict 'refs';
-    *{ "$class\::$name" } = subname( "$class\::$name", $closure );
-    goto &{ $closure };
-}
+        };
+        goto &{ $symbol };
+    }
+} ## use critic
 
-## use critic
+BEGIN {
+    *rc           = *resultclass;
+    *result_class = *resultclass;
+    *row_class    = *rowclass;
+    *class        = *rowclass;
+}
 
 1;

@@ -3,8 +3,6 @@ use warnings;
 
 package DBIx::Squirrel::ResultSet;
 
-## no critic (TestingAndDebugging::ProhibitNoStrict)
-
 BEGIN {
     @DBIx::Squirrel::ResultSet::ISA     = ( 'DBIx::Squirrel::it' );
     *DBIx::Squirrel::ResultSet::VERSION = *DBIx::Squirrel::VERSION;
@@ -16,7 +14,8 @@ use Sub::Name 'subname';
 use DBIx::Squirrel::it;
 use DBIx::Squirrel::ResultClass;
 
-sub DESTROY {
+sub DESTROY
+{ ## no critic (TestingAndDebugging::ProhibitNoStrict)
     return if ${^GLOBAL_PHASE} eq 'DESTRUCT';
     local ( $., $@, $!, $^E, $?, $_ );
     my ( $id, $self ) = shift->_id;
@@ -24,20 +23,22 @@ sub DESTROY {
     no strict 'refs';
     undef &{ "$class\::resultset" };
     return $self->SUPER::DESTROY;
-}
+} ## use critic
+
+sub class { ref $_[ 0 ] ? ref $_[ 0 ] : $_[ 0 ] }
 
 sub resultclass { 'DBIx::Squirrel::ResultClass' }
 
-sub rowclass {
-    my $self        = $_[ 0 ];
-    my $resultclass = $self->resultclass;
-    my $rowclass    = sprintf 'Row_0x%x', 0+ $self;
-    return wantarray ? ( $rowclass, $self ) : $rowclass;
+sub rowclass
+{
+    my $class = sprintf 'Row_0x%x', 0+ $_[ 0 ];
+    wantarray ? ( $class, $_[ 0 ] ) : $class;
 }
 
-sub _get_row {
-    my ( $p, $self ) = shift->_private;
-    my $row = do {
+sub _get_row
+{
+    $_ = do {
+        my ( $p, $self ) = shift->_private;
         if ( $p->{ fi } || ( !$p->{ ex } && !$self->execute ) ) {
             undef;
         } else {
@@ -49,54 +50,49 @@ sub _get_row {
                 undef;
             } else {
                 $p->{ rc } += 1;
-                shift @{ $p->{ bu } };
+                if ( $self->_has_callbacks ) {
+                    $self->transform( shift @{ $p->{ bu } } );
+                } else {
+                    shift @{ $p->{ bu } };
+                }
             }
         }
     };
-    return do {
-        if ( @{ $p->{ cb } } ) {
-            $self->transform( $self->_bless( $row ) );
-        } else {
-            $self->_bless( $row );
-        }
-    };
-    return $row;
 }
 
-sub _bless {
+sub _bless
+{ ## no critic (TestingAndDebugging::ProhibitNoStrict)
     my ( $rowclass, $self ) = shift->rowclass;
-    return do {
-        if ( ref $_[ 0 ] ) {
-            my $resultclass = $self->resultclass;
-            unless ( defined &{ $rowclass . '::resultset' } ) {
-                no strict 'refs';
-                undef &{ "$rowclass\::resultset" };
-                *{ "$rowclass\::resultset" } = do {
-                    weaken( my $rs = $self );
-                    subname( "$rowclass\::resultset", sub { $rs } );
-                };
-                undef &{ "$rowclass\::rs" };
-                *{ "$rowclass\::rs" }  = *{ "$rowclass\::resultset" };
-                @{ "$rowclass\::ISA" } = ( $resultclass );
-            }
-            $rowclass->new( $_[ 0 ] );
-        } else {
-            undef;
+    if ( ref $_[ 0 ] ) {
+        my $resultclass = $self->resultclass;
+        unless ( defined &{ $rowclass . '::resultset' } ) {
+            no strict 'refs';
+            undef &{ "$rowclass\::resultset" };
+            *{ "$rowclass\::resultset" } = do {
+                weaken( my $rs = $self );
+                subname( "$rowclass\::resultset", sub { $rs } );
+            };
+            undef &{ "$rowclass\::rs" };
+            *{ "$rowclass\::rs" }  = *{ "$rowclass\::resultset" };
+            @{ "$rowclass\::ISA" } = ( $resultclass );
         }
-    };
-}
+        $rowclass->new( $_[ 0 ] );
+    } else {
+        undef;
+    }
+} ## use critic
 
-sub remaining {
+sub remaining
+{
     my ( $p, $self ) = shift->_private;
     $_ = do {
         if ( $p->{ fi } || ( !$p->{ ex } && !$self->execute ) ) {
             undef;
         } else {
-            local ( $_ );
             while ( $self->_charge_buffer ) { ; }
             my $rowclass = $self->rowclass;
             my $rows     = do {
-                if ( @{ $self->_private->{ cb } } ) {
+                if ( $self->_has_callbacks ) {
                     [
                         map { $self->transform( $self->_bless( $_ ) ) } (
                             @{ $p->{ bu } },
@@ -112,13 +108,13 @@ sub remaining {
             $rows;
         }
     };
-    return wantarray ? @{ $_ } : $_;
+    wantarray ? @{ $_ } : $_;
 }
 
 BEGIN {
-    *rc = *resultclass;
+    *rc           = *resultclass;
+    *result_class = *resultclass;
+    *row_class    = *rowclass;
 }
-
-## use critic
 
 1;

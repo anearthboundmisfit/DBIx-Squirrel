@@ -4,16 +4,13 @@ use warnings;
 package    # hide from PAUSE
   DBIx::Squirrel::it;
 
-## no critic (TestingAndDebugging::ProhibitNoStrict)
-
 BEGIN {
     *DBIx::Squirrel::it::VERSION = *DBIx::Squirrel::VERSION;
 }
 
 use namespace::autoclean;
-use DBIx::Squirrel::ResultSet;
-use DBIx::Squirrel::util 'throw', 'whine', 'Dumper';
 use Scalar::Util 'blessed', 'reftype';
+use DBIx::Squirrel::util 'throw', 'whine', 'Dumper';
 
 use constant {
     E_BAD_SLICE    => 'Slice must be a reference to an ARRAY or HASH',
@@ -27,38 +24,41 @@ our $BUF_MAX_SIZE     = 64;
 
 my %itor;
 
-sub _dump_state {
-    my $id = $_[ 0 ]->_id;
-    return Dumper( { state => $itor{ $id } } );
+sub _dump_state
+{
+    if ( my $id = $_[ 0 ]->_id ) {
+        Dumper( $itor{ $id } );
+    } else {
+        '';
+    }
 }
 
-sub _id {
-    my $self = $_[ 0 ];
-    return do {
-        if ( wantarray ) {
-            ref $self ? ( 0+ $self, $self ) : ();
-        } else {
-            ref $self ? 0+ $self : undef;
-        }
-    };
+sub _id
+{
+    if ( wantarray ) {
+        ref $_[ 0 ] ? ( 0+ $_[ 0 ], $_[ 0 ] ) : ();
+    } else {
+        ref $_[ 0 ] ? 0+ $_[ 0 ] : undef;
+    }
 }
 
-sub DESTROY {
-    return if ${^GLOBAL_PHASE} eq 'DESTRUCT';
-    local ( $., $@, $!, $^E, $?, $_ );
-    my $self = $_[ 0 ];
-    my $id   = 0+ $_[ 0 ];
-    $self->_finish;
-    delete $itor{ $id };
+sub DESTROY
+{
+    if ( ${^GLOBAL_PHASE} ne 'DESTRUCT' ) {
+        local ( $., $@, $!, $^E, $?, $_ );
+        my $self = $_[ 0 ];
+        my $id   = 0+ $_[ 0 ];
+        $self->_finish;
+        delete $itor{ $id };
+    }
     return;
 }
 
-sub new {
+sub new
+{
     $_ = do {
         my @cb;
-        while ( ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE' ) {
-            unshift @cb, pop;
-        }
+        unshift @cb, pop while ref $_[ -1 ] && reftype( $_[ -1 ] ) eq 'CODE';
         my $class = ref $_[ 0 ] ? ref shift : shift;
         my $sth   = shift;
         if ( ref $sth && blessed( $sth ) && $sth->isa( 'DBI::st' ) ) {
@@ -78,10 +78,10 @@ sub new {
             undef;
         }
     };
-    return $_;
 }
 
-sub _set_slice {
+sub _set_slice
+{
     my ( $p, $self ) = shift->_private;
     $self->{ Slice } = do {
         if ( @_ ) {
@@ -97,38 +97,38 @@ sub _set_slice {
     return $self;
 }
 
-sub _private {
+sub _private
+{
     my $self = shift;
-    return do {
-        if ( ref $self ) {
-            my $id = 0+ $self;
-            unless ( $itor{ $id } ) {
+    if ( ref $self ) {
+        my $id      = 0+ $self;
+        my $private = do {
+            if ( $itor{ $id } ) {
+                $itor{ $id };
+            } else {
                 $itor{ $id } = {};
             }
-            if ( @_ ) {
-                $itor{ $id } = {
-                    %{ $itor{ $id } },
-                    do {
-                        if ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) {
-                            %{ $_[ 0 ] };
-                        } else {
-                            @_;
-                        }
-                    },
-                };
-            }
-            if ( wantarray ) {
-                ( $itor{ $id }, $self, $id );
-            } else {
-                $itor{ $id };
-            }
-        } else {
-            wantarray ? () : undef;
+        };
+        if ( @_ ) {
+            $private = $itor{ $id } = {
+                %{ $private },
+                do {
+                    if ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) {
+                        %{ $_[ 0 ] };
+                    } else {
+                        @_;
+                    }
+                },
+            };
         }
-    };
+        wantarray ? ( $private, $self, $id ) : $private;
+    } else {
+        wantarray ? () : undef;
+    }
 }
 
-sub _set_max_rows {
+sub _set_max_rows
+{
     my ( $p, $self ) = shift->_private;
     $self->{ MaxRows } = do {
         if ( @_ ) {
@@ -144,7 +144,8 @@ sub _set_max_rows {
     return $self;
 }
 
-sub _finish {
+sub _finish
+{
     my ( $p, $self ) = shift->_private;
     if ( my $sth = $p->{ st } ) {
         $sth->finish if $sth->{ Active };
@@ -172,19 +173,20 @@ sub _finish {
     return $self;
 }
 
-sub first {
-    my ( $p, $self ) = shift->_private;
+sub first
+{
     $_ = do {
+        my ( $p, $self ) = shift->_private;
         if ( @_ || $p->{ ex } || $p->{ st }->{ Active } ) {
             $self->reset( @_ );
         }
         $self->_get_row;
     };
-    return $_;
 }
 
-sub reset {
-    my ( $p, $self ) = shift->_private;
+sub reset
+{
+    my $self = shift;
     if ( @_ ) {
         if ( ref $_[ 0 ] ) {
             $self->_set_slice( shift );
@@ -202,12 +204,13 @@ sub reset {
             }
         }
     }
-    return $self->_finish;
+    $self->_finish;
 }
 
-sub _get_row {
-    my ( $p, $self ) = shift->_private;
-    my $row = do {
+sub _get_row
+{
+    $_ = do {
+        my ( $p, $self ) = shift->_private;
         if ( $p->{ fi } || ( !$p->{ ex } && !$self->execute ) ) {
             undef;
         } else {
@@ -217,22 +220,22 @@ sub _get_row {
                 undef;
             } else {
                 $p->{ rc } += 1;
-                shift @{ $p->{ bu } };
+                if ( $self->_has_callbacks ) {
+                    $self->transform( shift @{ $p->{ bu } } );
+                } else {
+                    shift @{ $p->{ bu } };
+                }
             }
-        }
-    };
-    return do {
-        if ( @{ $p->{ cb } } ) {
-            $self->transform( $row );
-        } else {
-            $row;
         }
     };
 }
 
-sub execute {
-    my ( $p, $self ) = shift->_private;
+sub _has_callbacks { scalar @{ $_[ 0 ]->_private->{ cb } } }
+
+sub execute
+{
     $_ = do {
+        my ( $p, $self ) = shift->_private;
         if ( my $sth = $p->{ st } ) {
             if ( $p->{ ex } || $p->{ fi } ) {
                 $self->reset;
@@ -254,57 +257,57 @@ sub execute {
             undef;
         }
     };
-    return $_;
 }
 
-sub _charge_buffer {
-    my $p   = $_[ 0 ]->_private;
-    my $sth = $p->{ st };
-    return unless $sth && $sth->{ Active };
-    my $res = do {
-        if ( my $rows = $sth->fetchall_arrayref( $p->{ sl }, $p->{ mr } ) ) {
-            if ( $p->{ bm } ) {
-                my $candidate_mr = do {
-                    if ( $p->{ bm } > 1 ) {
-                        $p->{ bm } * $p->{ mr };
-                    } else {
-                        $p->{ bx } + $p->{ mr };
+sub _charge_buffer
+{
+    $_ = do {
+        my $p   = $_[ 0 ]->_private;
+        my $sth = $p->{ st };
+        if ( $sth && $sth->{ Active } ) {
+            my $rows = $sth->fetchall_arrayref( $p->{ sl }, $p->{ mr } );
+            if ( $rows ) {
+                if ( $p->{ bm } ) {
+                    my $candidate_mr = do {
+                        if ( $p->{ bm } > 1 ) {
+                            $p->{ bm } * $p->{ mr };
+                        } else {
+                            $p->{ bx } + $p->{ mr };
+                        }
+                    };
+                    if ( $p->{ bl } >= $candidate_mr ) {
+                        $p->{ mr } = $candidate_mr;
                     }
-                };
-                if ( $p->{ bl } >= $candidate_mr ) {
-                    $p->{ mr } = $candidate_mr;
                 }
-            }
-            $p->{ bu } = do {
                 if ( $p->{ bu } ) {
-                    [ @{ $p->{ bu } }, @{ $rows } ];
+                    push @{ $p->{ bu } }, @{ $rows };
                 } else {
-                    $rows;
+                    $p->{ bu } = $rows;
                 }
-            };
-            $p->{ rf } += @{ $rows };
+                $p->{ rf } += @{ $rows };
+            } else {
+                $p->{ fi } = 1;
+                0;
+            }
         } else {
-            $p->{ fi } = 1;
             undef;
         }
     };
-    return $res;
 }
 
-sub _buffer_empty {
-    my $p = $_[ 0 ]->_private;
-    return do {
-        if ( $p->{ bu } ) {
-            1 if @{ $p->{ bu } } < 1;
-        } else {
-            1;
-        }
-    };
+sub _buffer_empty
+{
+    if ( my $buffer = $_[ 0 ]->_private->{ bu } ) {
+        @{ $buffer } ? 0 : 1;
+    } else {
+        1;
+    }
 }
 
-sub transform {
-    my ( $p, $self ) = shift->_private;
+sub transform
+{
     $_ = do {
+        my ( $p, $self ) = shift->_private;
         if ( defined $_[ 0 ] ) {
             local ( $_ );
             my $row = $_[ 0 ];
@@ -316,12 +319,12 @@ sub transform {
             undef;
         }
     };
-    return $_;
 }
 
-sub single {
-    my ( $p, $self ) = shift->_private;
+sub single
+{
     $_ = do {
+        my ( $p, $self ) = shift->_private;
         my $res = do {
             if ( my $row_count = $self->execute( @_ ) ) {
                 if ( $row_count > 1 ) {
@@ -335,12 +338,12 @@ sub single {
         $self->reset;
         $res;
     };
-    return $_;
 }
 
-sub find {
-    my ( $p, $self ) = shift->_private;
+sub find
+{
     $_ = do {
+        my ( $p, $self ) = shift->_private;
         my $res = do {
             if ( my $row_count = $self->execute( @_ ) ) {
                 $self->_get_row;
@@ -351,16 +354,14 @@ sub find {
         $self->reset;
         $res;
     };
-    return $_;
 }
 
-sub count {
-    return scalar @{ scalar shift->all( @_ ) };
-}
+sub count { scalar @{ scalar shift->all( @_ ) } }
 
-sub all {
-    my ( $p, $self ) = shift->_private;
+sub all
+{
     $_ = do {
+        my ( $p, $self ) = shift->_private;
         my $res = do {
             if ( $self->execute( @_ ) ) {
                 $self->remaining;
@@ -371,19 +372,19 @@ sub all {
         $self->reset;
         $res;
     };
-    return wantarray ? @{ $_ } : $_;
+    wantarray ? @{ $_ } : $_;
 }
 
-sub remaining {
-    my ( $p, $self ) = shift->_private;
+sub remaining
+{
     $_ = do {
+        my ( $p, $self ) = shift->_private;
         if ( $p->{ fi } || ( !$p->{ ex } && !$self->execute ) ) {
             undef;
         } else {
-            local ( $_ );
             while ( $self->_charge_buffer ) { ; }
             my $rows = do {
-                if ( @{ $self->_private->{ cb } } ) {
+                if ( $self->_has_callbacks ) {
                     [ map { $self->transform( $_ ) } @{ $p->{ bu } } ];
                 } else {
                     $p->{ bu };
@@ -395,12 +396,13 @@ sub remaining {
             $rows;
         }
     };
-    return wantarray ? @{ $_ } : $_;
+    wantarray ? @{ $_ } : $_;
 }
 
-sub next {
-    my $self = shift;
+sub next
+{
     $_ = do {
+        my $self = shift;
         if ( @_ ) {
             if ( ref $_[ 0 ] ) {
                 $self->_set_slice( shift );
@@ -420,36 +422,21 @@ sub next {
         }
         $self->_get_row;
     };
-    return $_;
 }
 
-sub reiterate {
-    shift->sth->reiterate( @_ );
-}
+sub reiterate { shift->sth->reiterate( @_ ) }
 
-sub resultset {
-    shift->sth->resultset( @_ );
-}
+sub resultset { shift->sth->resultset( @_ ) }
 
-sub sth {
-    shift->_private->{ st };
-}
+sub sth { $_[ 0 ]->_private->{ st } }
 
-sub pending_execution {
-    shift->_private->{ ex };
-}
+sub pending_execution { $_[ 0 ]->_private->{ ex } }
 
-sub not_pending_execution {
-    not shift->_private->{ ex };
-}
+sub not_pending_execution { not $_[ 0 ]->_private->{ ex } }
 
-sub done {
-    shift->_private->{ fi };
-}
+sub done { $_[ 0 ]->_private->{ fi } }
 
-sub not_done {
-    not shift->_private->{ fi };
-}
+sub not_done { not $_[ 0 ]->_private->{ fi } }
 
 BEGIN {
     *resultset = *resultset;
@@ -458,7 +445,5 @@ BEGIN {
     *iterate   = *reiterate;
     *it        = *reiterate;
 }
-
-## use critic
 
 1;

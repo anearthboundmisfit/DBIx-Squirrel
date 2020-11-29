@@ -15,8 +15,16 @@ use namespace::autoclean;
 use Scalar::Util 'blessed', 'reftype';
 use DBIx::Squirrel::util 'throw';
 use DBIx::Squirrel::st;
+use DBIx::Squirrel::ResultSet;
 
-sub prepare {
+use constant {
+    E_EXP_STATEMENT => 'Expected a statement',
+    E_EXP_STH       => 'Expected a statement handle',
+    E_EXP_REF       => 'Expected a reference to a HASH or ARRAY',
+};
+
+sub prepare
+{
     my $dbh = shift;
     my ( $params, $std, $sql ) = _common_prepare_work( shift );
     my $sth = do {
@@ -34,10 +42,11 @@ sub prepare {
             },
         );
     }
-    return $sth;
+    $sth;
 }
 
-sub _common_prepare_work {
+sub _common_prepare_work
+{
     my ( $order, $std, $sql ) = do {
         my $statement = do {
             if ( blessed( $_[ 0 ] ) ) {
@@ -46,7 +55,7 @@ sub _common_prepare_work {
                 } elsif ( $_[ 0 ]->isa( 'DBI::st' ) ) {
                     shift->{ Statement };
                 } else {
-                    throw 'Expected a statement handle';
+                    throw E_EXP_STH;
                 }
             } else {
                 shift;
@@ -54,11 +63,15 @@ sub _common_prepare_work {
         };
         ( _get_param_order( $statement ), $statement );
     };
-    throw 'Expected a statement' unless length $std;
-    return ( $order, $std, $sql );
+    if ( length $std ) {
+        ( $order, $std, $sql );
+    } else {
+        throw E_EXP_STATEMENT;
+    }
 }
 
-sub _get_param_order {
+sub _get_param_order
+{
     my $sql   = shift;
     my $order = do {
         my %order;
@@ -75,10 +88,11 @@ sub _get_param_order {
         }
         %order ? \%order : undef;
     };
-    return wantarray ? ( $order, $sql ) : $order;
+    wantarray ? ( $order, $sql ) : $order;
 }
 
-sub prepare_cached {
+sub prepare_cached
+{
     my $dbh = shift;
     my ( $params, $std, $sql ) = _common_prepare_work( shift );
     my $sth = do {
@@ -97,10 +111,11 @@ sub prepare_cached {
             }
         );
     }
-    return $sth;
+    $sth;
 }
 
-sub do {
+sub do
+{
     my $dbh       = shift;
     my $statement = shift;
     my ( $res, $sth );
@@ -115,7 +130,7 @@ sub do {
                     $res = $sth->execute( @_ );
                 }
             } else {
-                throw 'Expected a reference to a HASH or ARRAY';
+                throw E_EXP_REF;
             }
         } else {
             if ( defined $_[ 0 ] ) {
@@ -133,13 +148,14 @@ sub do {
             $res = $sth->execute;
         }
     }
-    return wantarray ? ( $res, $sth ) : $res;
+    wantarray ? ( $res, $sth ) : $res;
 }
 
-sub iterate {
+sub iterate
+{
     my $dbh       = shift;
     my $statement = shift;
-    my $itor      = do {
+    $_ = do {
         if ( @_ ) {
             if ( ref $_[ 0 ] ) {
                 if ( reftype( $_[ 0 ] ) eq 'HASH' ) {
@@ -155,7 +171,7 @@ sub iterate {
                         $sth->iterate( @_ );
                     }
                 } else {
-                    throw 'Expected a reference to a HASH or ARRAY';
+                    throw E_EXP_REF;
                 }
             } else {
                 if ( defined $_[ 0 ] ) {
@@ -174,13 +190,13 @@ sub iterate {
             }
         }
     };
-    return $itor;
 }
 
-sub resultset {
+sub resultset
+{
     my $dbh       = shift;
     my $statement = shift;
-    my $rs        = do {
+    $_ = do {
         if ( @_ ) {
             if ( ref $_[ 0 ] ) {
                 if ( reftype( $_[ 0 ] ) eq 'HASH' ) {
@@ -196,7 +212,7 @@ sub resultset {
                         $sth->resultset( @_ );
                     }
                 } else {
-                    throw 'Expected a reference to a HASH or ARRAY';
+                    throw E_EXP_REF;
                 }
             } else {
                 if ( defined $_[ 0 ] ) {
@@ -215,12 +231,12 @@ sub resultset {
             }
         }
     };
-    return $rs;
 }
 
 BEGIN {
-    *it = *iterate;
-    *rs = *resultset;
+    *it         = *iterate;
+    *rs         = *resultset;
+    *result_set = $resultset;
 }
 
 ## use critic

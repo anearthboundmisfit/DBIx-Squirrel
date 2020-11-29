@@ -4,89 +4,88 @@ use warnings;
 package    # hide from PAUSE
   DBIx::Squirrel::st;
 
-## no critic (TestingAndDebugging::ProhibitNoStrict)
-
 BEGIN {
     @DBIx::Squirrel::st::ISA     = ( 'DBI::st' );
     *DBIx::Squirrel::st::VERSION = *DBIx::Squirrel::VERSION;
 }
 
 use namespace::autoclean;
-use DBIx::Squirrel::ResultSet;
-use DBIx::Squirrel::util 'throw', 'whine';
+use DBI;
 use Scalar::Util 'reftype';
+use DBIx::Squirrel::util 'throw', 'whine';
+use DBIx::Squirrel::it;
+use DBIx::Squirrel::ResultSet;
 
 use constant {
-    E_INV_POS_PH => 'Cannot bind invalid positional placeholder (%s)',
-    E_UNK_PH     => 'Cannot bind unknown placeholder (%s)',
+    E_INVALID_PLACEHOLDER => 'Cannot bind invalid placeholder (%s)',
+    E_UNKNOWN_PLACEHOLDER => 'Cannot bind unknown placeholder (%s)',
+    W_CHECK_BIND_VALS     => 'Check bind values match placeholder scheme',
 };
 
-sub _id {
-    my $self = $_[ 0 ];
-    return do {
-        if ( wantarray ) {
-            ref $self ? ( 0+ $self, $self ) : ();
-        } else {
-            ref $self ? 0+ $self : undef;
-        }
-    };
+sub _id
+{
+    if ( wantarray ) {
+        ref $_[ 0 ] ? ( 0+ $_[ 0 ], $_[ 0 ] ) : ();
+    } else {
+        ref $_[ 0 ] ? 0+ $_[ 0 ] : undef;
+    }
 }
 
-sub _private {
+sub _private
+{
     my $self = shift;
-    return do {
-        if ( ref $self ) {
-            my $id = 0+ $self;
-            unless ( $self->{ private_dbix_squirrel } ) {
+    if ( ref $self ) {
+        my $private = do {
+            if ( $self->{ private_dbix_squirrel } ) {
+                $self->{ private_dbix_squirrel };
+            } else {
                 $self->{ private_dbix_squirrel } = {};
             }
-            if ( @_ ) {
-                $self->{ private_dbix_squirrel } = {
-                    %{ $self->{ private_dbix_squirrel } },
-                    do {
-                        if ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) {
-                            %{ $_[ 0 ] };
-                        } else {
-                            @_;
-                        }
-                    },
-                };
-            }
-            if ( wantarray ) {
-                ( $self->{ private_dbix_squirrel }, $self, $id );
-            } else {
-                $self->{ private_dbix_squirrel };
-            }
-        } else {
-            wantarray ? () : undef;
+        };
+        if ( @_ ) {
+            $private = $self->{ private_dbix_squirrel } = {
+                %{ $private },
+                do {
+                    if ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) {
+                        %{ $_[ 0 ] };
+                    } else {
+                        @_;
+                    }
+                },
+            };
         }
-    };
+        wantarray ? ( $private, $self, 0+ $self ) : $private;
+    } else {
+        wantarray ? () : undef;
+    }
 }
 
-sub execute {
+sub execute
+{
     my $sth = shift;
-    if ( @_ ) {
-        $sth->bind( @_ );
-    }
     if ( $sth->{ Active } && $DBIx::Squirrel::FINISH_ACTIVE_ON_EXECUTE ) {
         $sth->finish;
     }
-    return $sth->DBI::st::execute;
+    if ( @_ ) {
+        $sth->bind( @_ );
+    }
+    $sth->DBI::st::execute;
 }
 
-sub bind {
+sub bind
+{
     my ( $p, $sth ) = shift->_private;
     if ( @_ ) {
         my $order = $p->{ params };
         if ( $order || ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) ) {
-            my %kv = _format_params( $order, @_ );
+            my %kv = @{ _format_params( $order, @_ ) };
             while ( my ( $k, $v ) = each %kv ) {
                 if ( $k ) {
                     if ( $k =~ m/^([\:\$\?]?(\d+))$/ ) {
                         if ( $2 > 0 ) {
                             $sth->bind_param( $2, $v );
                         } else {
-                            throw E_INV_POS_PH, $1;
+                            throw E_INVALID_PLACEHOLDER, $1;
                         }
                     } else {
                         $sth->bind_param( $k, $v );
@@ -96,7 +95,7 @@ sub bind {
         } else {
             my @p = do {
                 if ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'ARRAY' ) {
-                    @{ +shift };
+                    @{ $_[ 0 ] };
                 } else {
                     @_;
                 }
@@ -106,44 +105,47 @@ sub bind {
             }
         }
     }
-    return $sth;
+    $sth;
 }
 
-sub _format_params {
+sub _format_params
+{
     my $order  = shift;
     my @params = do {
         if ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'HASH' ) {
-            %{ +shift };
+            %{ $_[ 0 ] };
         } elsif ( ref $_[ 0 ] && reftype( $_[ 0 ] ) eq 'ARRAY' ) {
-            @{ +shift };
+            @{ $_[ 0 ] };
         } else {
             @_;
         }
     };
-    return do {
-        if ( my %order = _order_of_placeholders_if_positional( $order ) ) {
-            map { ( $order{ $_ } => $params[ $_ - 1 ] ) } keys %order;
-        } else {
-            whine 'Check bind values' if @params % 2;
-            @params;
-        }
-    };
-}
-
-sub _order_of_placeholders_if_positional {
-    if ( my $order = shift ) {
-        if ( ref $order && reftype( $order ) eq 'HASH' ) {
-            my @names = values %{ $order };
-            my $count = grep { m/^[\:\$\?]\d+$/ } @names;
-            if ( $count == @names ) {
-                return %{ $order };
-            }
-        }
+    if ( my $ph = _order_of_placeholders_if_positional( $order ) ) {
+        [ map { ( $ph->{ $_ } => $params[ $_ - 1 ] ) } keys %{ $ph } ];
+    } else {
+        whine W_CHECK_BIND_VALS if @params % 2;
+        \@params;
     }
-    return;
 }
 
-sub bind_param {
+sub _order_of_placeholders_if_positional
+{
+    my $order = shift;
+    if ( ref $order && reftype( $order ) eq 'HASH' ) {
+        my @names = values %{ $order };
+        my $count = grep { m/^[\:\$\?]\d+$/ } @names;
+        if ( $count == @names ) {
+            $order;
+        } else {
+            undef;
+        }
+    } else {
+        undef;
+    }
+}
+
+sub bind_param
+{
     my ( $p, $sth ) = shift->_private;
     my $param = shift;
     my %b;
@@ -160,7 +162,7 @@ sub bind_param {
                   keys %{ $order }
             );
             unless ( @bound || $DBIx::Squirrel::RELAXED_PARAM_CHECKS ) {
-                throw E_UNK_PH, $param;
+                throw E_UNKNOWN_PLACEHOLDER, $param;
             }
         }
     } else {
@@ -169,7 +171,8 @@ sub bind_param {
     return wantarray ? %b : \%b;
 }
 
-sub prepare {
+sub prepare
+{
     my $sth = shift;
     return $sth->{ Database }->prepare( $sth->{ Statement }, @_ );
 }
@@ -178,9 +181,7 @@ sub iterate { DBIx::Squirrel::it->new( shift, @_ ) }
 
 sub resultset { DBIx::Squirrel::ResultSet->new( shift, @_ ) }
 
-sub iterator {
-    $_[ 0 ]->_private->{ itor };
-}
+sub iterator { $_[ 0 ]->_private->{ itor } }
 
 BEGIN {
     *itor  = *iterator;
@@ -188,7 +189,5 @@ BEGIN {
     *rs    = *resultset;
     *clone = *prepare;
 }
-
-## use critic
 
 1;

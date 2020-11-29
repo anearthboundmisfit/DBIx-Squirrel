@@ -3,15 +3,18 @@ use warnings;
 
 package DBIx::Squirrel;
 
-## no critic (TestingAndDebugging::ProhibitNoStrict)
-
 BEGIN {
     @DBIx::Squirrel::ISA     = ( 'DBI' );
     $DBIx::Squirrel::VERSION = '2020.11.00';
 }
 
-use DBIx::Squirrel::util 'Dumper';
+use DBI;
 use DBIx::Squirrel::dr;
+use DBIx::Squirrel::db;
+use DBIx::Squirrel::st;
+use DBIx::Squirrel::it;
+use DBIx::Squirrel::ResultSet;
+use DBIx::Squirrel::ResultClass;
 
 our $RELAXED_PARAM_CHECKS     = 0;
 our $FINISH_ACTIVE_ON_EXECUTE = 1;
@@ -32,8 +35,6 @@ BEGIN {
     *BUF_MULTIPLIER        = *DBIx::Squirrel::it::BUF_MULTIPLIER;
     *BUF_MAX_SIZE          = *DBIx::Squirrel::it::BUF_MAX_SIZE;
 }
-
-## use critic
 
 1;
 
