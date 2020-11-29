@@ -168,13 +168,13 @@ sub bind_param
     } else {
         $sth->DBI::st::bind_param( $param, ( $b{ $param } = shift ) );
     }
-    return wantarray ? %b : \%b;
+    wantarray ? %b : \%b;
 }
 
 sub prepare
 {
     my $sth = shift;
-    return $sth->{ Database }->prepare( $sth->{ Statement }, @_ );
+    $sth->{ Database }->prepare( $sth->{ Statement }, @_ );
 }
 
 sub iterate { DBIx::Squirrel::it->new( shift, @_ ) }

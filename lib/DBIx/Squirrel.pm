@@ -236,30 +236,27 @@ to add a few enhancements to its venerable ancestor's interface.
 
 =head2 Compatibility
 
-A developer may confidently replace C<use DBI> with C<use DBIx::Squirrel> and
-expect a script to function as it did prior to the change. 
+DBIx-Squirrel's baseline behaviour is B<be like DBI>.
+
+A developer should be able to confidently replace C<use DBI> with
+C<use DBIx::Squirrel>, while expecting their script to behave just
+as it did before the change.
 
 DBIx-Squirrel's enhancements are designed to be low-friction, intuitive, and 
 elective. Code using this package should behave like code using DBI, that is
-until deviation standard behaviour is expected.
-
-In addition to a high degree of backward compatibility with DBI, there are
-small number of conceptual overlaps with DBIx-Class. Where such overlaps exist,
-DBIx-Squirrel behaviours with analogous DBIx-Class behaviours have the same
-method names.
+until deviation from standard behaviour is expected and invited.
 
 =head2 Ease of use
 
-DBIx-Squirrel's baseline behaviour is B<be like DBI>. There is no barrier to
-using this module if you are experienced using the DBI, or familiar with its
-extensive documentation.
+An experienced user of DBI, or someone familiar with DBI's documentation,
+should be able to use DBIx-Squirrel without any issues.
 
-Pretty much all of DBIx-Squirrel's enhancements are progressive or additive
-in nature. Most experienced DBI and DBIx-Class programmers should find a
-cursory glance at the synopsis enough to get started.
+DBIx-Squirrel's enhancements are either additive or progressive. Experienced
+DBI and DBIx-Class programmers should find a cursory glance at the synopsis
+enough to get started in next to no time at all.
 
-The intention behind DBIx-Squirrel was to have it occupy a sweet spot on the
-continuum from DBI to DBIx-Class.
+The intention has been for DBIx-Squirrel was to occupy a sweet spot between DBI
+and DBIx-Class (though much closer to DBI).
 
 =head1 OVERVIEW
 

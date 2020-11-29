@@ -236,7 +236,7 @@ sub resultset
 BEGIN {
     *it         = *iterate;
     *rs         = *resultset;
-    *result_set = $resultset;
+    *result_set = *resultset;
 }
 
 ## use critic
