@@ -12,33 +12,23 @@ DBIx::Squirrel::dr - DBI database driver (DBI::dr) subclass
 
 =head1 SYNOPSIS
 
-    # ADDITIONS AND ENHANCEMENTS TO STANDARD DBI BEHAVIOURS
-
-    # New "connect_clone" method. Standard DBI connections may also be cloned
-    # and upgraded.
-    $dbh = DBIx::Squirrel->connect_clone($other_dbh, \%attr);
-
-    # Additional way to use the "connect" method. Standard DBI connections may
-    # also be cloned and upgraded.
-    $dbh = DBIx::Squirrel->connect($other_dbh, \%attr);
-
-    # Use the traditional methods to connect to datasources using connection
-    # parameters.
     $dbh = DBI->connect($data_source, $username, $password)
       or die $DBI::Squirrel::errstr;
     $dbh = DBI->connect($data_source, $username, $password, \%attr)
       or die $DBI::Squirrel::errstr;
+
     $dbh = DBI->connect_cached($data_source, $username, $password)
       or die $DBI::Squirrel::errstr;
     $dbh = DBI->connect_cached($data_source, $username, $password, \%attr)
       or die $DBI::Squirrel::errstr;
 
+    $dbh = DBIx::Squirrel->connect($original_dbh, \%attr);
+    $dbh = DBIx::Squirrel->connect_clone($original_dbh, \%attr);
+
 =head1 DESCRIPTION
 
 This module subclasses DBI's DBI::dr module to provide a new way to connect to
 databases using database session handles.
-
-=head1 METHODS
 
 =cut
 
@@ -58,20 +48,23 @@ use DBI;
 use Scalar::Util 'blessed';
 use DBIx::Squirrel::db;
 
-=head2 connect_clone
+=head1 METHODS
 
-=head3 Clone a database session
+=head2 connect_clone
 
     $clone_dbh = DBI::Squirrel->connect_clone($original_dbh);
     $clone_dbh = DBI::Squirrel->connect_clone($original_dbh, \%attr);
 
-Use this method to clone another database session as a DBIx-Squirrel database
-session. Cloning and connecting to a standard DBI::db session would allow the
-clone to make use of DBIx-Squirrel's features.
+Clones another database session, returning a DBIx-Squirrel database handle.
 
 The attributes for the cloned session are the same as those used for the
-original session, with any other attributes in C<\%attr> merged over
-them.
+original session, with any attributes in C<\%attr> merged over them.
+
+Cloning a standard DBI::db session in this manner allows the clone to benefit
+from DBIx-Squirrel's features.
+
+DBIx-Squirrel's C<connect> method also allows a style of invocation that
+results in a call to the C<connect_clone> method.
 
 =cut
 
@@ -86,8 +79,6 @@ sub connect_clone
 }
 
 =head2 connect_cached
-
-=head3 Connect to a data source (possibly recycling a connection)
 
     $dbh = DBI->connect_cached($data_source, $username, $password)
       or die $DBI::Squirrel::errstr;
@@ -134,31 +125,27 @@ sub _is_db_handle
 
 =head2 connect
 
-=head3 Clone a database session
+    $dbh = DBI->connect($data_source, $username, $password)
+      or die $DBI::Squirrel::errstr;
+    $dbh = DBI->connect($data_source, $username, $password, \%attr)
+      or die $DBI::Squirrel::errstr;
+
+Establishes a database connection, or session, to the requested C<$data_source>,
+returning a DBIx-Squirrel database handle if the connection succeeds.
+
+For more detailed information about this style of method invocation, please
+refer to the L<DBI> documentation.
+
+DBIx-Squirrel provides for an alternative calling style:
 
     $clone_dbh = DBI::Squirrel->connect($original_dbh);
     $clone_dbh = DBI::Squirrel->connect($original_dbh, \%attr);
 
-Invoke C<connect> this way to clone another database session as a DBIx-Squirrel
-database session. Cloning and connecting to a standard DBI::db session would
-allow the clone to make use of DBIx-Squirrel's features.
+Calling C<connect> in this manner clones the original database handle as a
+DBIx-Squirrel database handle.
 
 The attributes for the cloned session are the same as those used for the
-original session, with any other attributes in C<\%attr> merged over
-them.
-
-=head3 Connect to a data source
-
-    $dbh = DBI->connect_cached($data_source, $username, $password)
-      or die $DBI::Squirrel::errstr;
-    $dbh = DBI->connect_cached($data_source, $username, $password, \%attr)
-      or die $DBI::Squirrel::errstr;
-
-Establishes a database connection, or session, to the requested C<$data_source>,
-returning a database handle if the connection succeeds.
-
-For more detailed information about this method, please refer to the L<DBI>
-documentation.
+original session, with any attributes in C<\%attr> merged over them.
 
 =cut
 

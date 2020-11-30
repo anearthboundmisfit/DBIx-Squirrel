@@ -1,3 +1,85 @@
+
+=pod
+
+=encoding UTF-8
+
+=head1 NAME
+
+DBIx::Squirrel::db - DBI database handle (DBI::db) subclass
+
+=head1 VERSION
+
+2020.11.00
+
+=head1 SYNOPSIS
+
+    $rows = $dbh->do($statement);
+    $rows = $dbh->do($statement, \%attr);
+    $rows = $dbh->do($statement, @bind_values);
+    $rows = $dbh->do($statement, \@bind_values);
+    $rows = $dbh->do($statement, %bind_values);
+    $rows = $dbh->do($statement, \%attr, @bind_values);
+    $rows = $dbh->do($statement, \%attr, \@bind_values);
+    $rows = $dbh->do($statement, \%attr, %bind_values);
+    $rows = $dbh->do($statement, \%attr, \%bind_values);
+
+    ($rows, $sth) = $dbh->do($statement);
+    ($rows, $sth) = $dbh->do($statement, \%attr);
+    ($rows, $sth) = $dbh->do($statement, @bind_values);
+    ($rows, $sth) = $dbh->do($statement, \@bind_values);
+    ($rows, $sth) = $dbh->do($statement, %bind_values);
+    ($rows, $sth) = $dbh->do($statement, \%attr, @bind_values);
+    ($rows, $sth) = $dbh->do($statement, \%attr, \@bind_values);
+    ($rows, $sth) = $dbh->do($statement, \%attr, %bind_values);
+    ($rows, $sth) = $dbh->do($statement, \%attr, \%bind_values);
+
+    $sth = $dbh->prepare($statement);
+    $sth = $dbh->prepare($statement, \%attr);
+    $sth = $dbh->prepare($original_sth);
+    $sth = $dbh->prepare($original_sth, \%attr);
+
+    $sth = $dbh->prepare_cached($statement);
+    $sth = $dbh->prepare_cached($statement, \%attr);
+    $sth = $dbh->prepare_cached($original_sth);
+    $sth = $dbh->prepare_cached($original_sth, \%attr);
+
+    $itor = $dbh->iterate($statement);
+    $itor = $dbh->iterate($statement, \%attr);
+    $itor = $dbh->iterate($statement, @bind_values);
+    $itor = $dbh->iterate($statement, \@bind_values);
+    $itor = $dbh->iterate($statement, %bind_values);
+    $itor = $dbh->iterate($statement, \%attr, @bind_values);
+    $itor = $dbh->iterate($statement, \%attr, \@bind_values);
+    $itor = $dbh->iterate($statement, \%attr, %bind_values);
+    $itor = $dbh->iterate($statement, \%attr, \%bind_values);
+
+    $rs = $dbh->resultset($statement);
+    $rs = $dbh->resultset($statement, \%attr);
+    $rs = $dbh->resultset($statement, @bind_values);
+    $rs = $dbh->resultset($statement, \@bind_values);
+    $rs = $dbh->resultset($statement, %bind_values);
+    $rs = $dbh->resultset($statement, \%attr, @bind_values);
+    $rs = $dbh->resultset($statement, \%attr, \@bind_values);
+    $rs = $dbh->resultset($statement, \%attr, %bind_values);
+    $rs = $dbh->resultset($statement, \%attr, \%bind_values);
+
+=head1 DESCRIPTION
+
+This module subclasses DBI's DBI::db module, providing a number of progressive
+and additive enhancements:
+
+=over
+
+=item * statement and cached statement preparation;
+
+=item * combined statement preparation and execution;
+
+=item * the creation of result set iterators.
+
+=back
+
+=cut
+
 use strict;
 use warnings;
 
@@ -20,6 +102,79 @@ use constant {
     E_EXP_STH       => 'Expected a statement handle',
     E_EXP_REF       => 'Expected a reference to a HASH or ARRAY',
 };
+
+=head1 METHODS
+
+=head2 do
+
+    $rows = $dbh->do($statement);
+    $rows = $dbh->do($statement, \%attr);
+    $rows = $dbh->do($statement, \%attr, @bind_values);
+
+    $rows = $dbh->do($statement, @bind_values);
+    $rows = $dbh->do($statement, \@bind_values);
+    $rows = $dbh->do($statement, %bind_values);
+    $rows = $dbh->do($statement, \%attr, \@bind_values);
+    $rows = $dbh->do($statement, \%attr, %bind_values);
+    $rows = $dbh->do($statement, \%attr, \%bind_values);
+
+    ($rows, $sth) = $dbh->do($statement);
+    ($rows, $sth) = $dbh->do($statement, \%attr);
+    ($rows, $sth) = $dbh->do($statement, @bind_values);
+    ($rows, $sth) = $dbh->do($statement, \@bind_values);
+    ($rows, $sth) = $dbh->do($statement, %bind_values);
+    ($rows, $sth) = $dbh->do($statement, \%attr, @bind_values);
+    ($rows, $sth) = $dbh->do($statement, \%attr, \@bind_values);
+    ($rows, $sth) = $dbh->do($statement, \%attr, %bind_values);
+    ($rows, $sth) = $dbh->do($statement, \%attr, \%bind_values);
+
+=cut
+
+sub do
+{
+    my $dbh       = shift;
+    my $statement = shift;
+    my ( $res, $sth );
+    if ( @_ ) {
+        if ( ref $_[ 0 ] ) {
+            if ( reftype( $_[ 0 ] ) eq 'HASH' ) {
+                if ( $sth = $dbh->prepare( $statement, shift ) ) {
+                    $res = $sth->execute( @_ );
+                }
+            } elsif ( reftype( $_[ 0 ] ) eq 'ARRAY' ) {
+                if ( $sth = $dbh->prepare( $statement ) ) {
+                    $res = $sth->execute( @_ );
+                }
+            } else {
+                throw E_EXP_REF;
+            }
+        } else {
+            if ( defined $_[ 0 ] ) {
+                if ( $sth = $dbh->prepare( $statement ) ) {
+                    $res = $sth->execute( @_ );
+                }
+            } else {
+                if ( $sth = $dbh->prepare( $statement, shift ) ) {
+                    $res = $sth->execute( @_ );
+                }
+            }
+        }
+    } else {
+        if ( $sth = $dbh->prepare( $statement ) ) {
+            $res = $sth->execute;
+        }
+    }
+    wantarray ? ( $res, $sth ) : $res;
+}
+
+=head2 prepare
+
+    $sth = $dbh->prepare($statement);
+    $sth = $dbh->prepare($statement, \%attr);
+    $sth = $dbh->prepare($original_sth);
+    $sth = $dbh->prepare($original_sth, \%attr);
+
+=cut
 
 sub prepare
 {
@@ -89,6 +244,15 @@ sub _get_param_order
     wantarray ? ( $order, $sql ) : $order;
 }
 
+=head2 prepare_cached
+
+    $sth = $dbh->prepare_cached($statement);
+    $sth = $dbh->prepare_cached($statement, \%attr);
+    $sth = $dbh->prepare_cached($original_sth);
+    $sth = $dbh->prepare_cached($original_sth, \%attr);
+
+=cut
+
 sub prepare_cached
 {
     my $dbh = shift;
@@ -112,42 +276,19 @@ sub prepare_cached
     $sth;
 }
 
-sub do
-{
-    my $dbh       = shift;
-    my $statement = shift;
-    my ( $res, $sth );
-    if ( @_ ) {
-        if ( ref $_[ 0 ] ) {
-            if ( reftype( $_[ 0 ] ) eq 'HASH' ) {
-                if ( $sth = $dbh->prepare( $statement, shift ) ) {
-                    $res = $sth->execute( @_ );
-                }
-            } elsif ( reftype( $_[ 0 ] ) eq 'ARRAY' ) {
-                if ( $sth = $dbh->prepare( $statement ) ) {
-                    $res = $sth->execute( @_ );
-                }
-            } else {
-                throw E_EXP_REF;
-            }
-        } else {
-            if ( defined $_[ 0 ] ) {
-                if ( $sth = $dbh->prepare( $statement ) ) {
-                    $res = $sth->execute( @_ );
-                }
-            } else {
-                if ( $sth = $dbh->prepare( $statement, shift ) ) {
-                    $res = $sth->execute( @_ );
-                }
-            }
-        }
-    } else {
-        if ( $sth = $dbh->prepare( $statement ) ) {
-            $res = $sth->execute;
-        }
-    }
-    wantarray ? ( $res, $sth ) : $res;
-}
+=head2 iterate
+
+    $itor = $dbh->iterate($statement);
+    $itor = $dbh->iterate($statement, \%attr);
+    $itor = $dbh->iterate($statement, @bind_values);
+    $itor = $dbh->iterate($statement, \@bind_values);
+    $itor = $dbh->iterate($statement, %bind_values);
+    $itor = $dbh->iterate($statement, \%attr, @bind_values);
+    $itor = $dbh->iterate($statement, \%attr, \@bind_values);
+    $itor = $dbh->iterate($statement, \%attr, %bind_values);
+    $itor = $dbh->iterate($statement, \%attr, \%bind_values);
+
+=cut
 
 sub iterate
 {
@@ -190,6 +331,28 @@ sub iterate
     };
 }
 
+=head2 it
+
+An alias for C<iterate>
+
+=cut
+
+BEGIN { *it = *iterate }
+
+=head2 resultset
+
+    $rs = $dbh->resultset($statement);
+    $rs = $dbh->resultset($statement, \%attr);
+    $rs = $dbh->resultset($statement, @bind_values);
+    $rs = $dbh->resultset($statement, \@bind_values);
+    $rs = $dbh->resultset($statement, %bind_values);
+    $rs = $dbh->resultset($statement, \%attr, @bind_values);
+    $rs = $dbh->resultset($statement, \%attr, \@bind_values);
+    $rs = $dbh->resultset($statement, \%attr, %bind_values);
+    $rs = $dbh->resultset($statement, \%attr, \%bind_values);
+
+=cut
+
 sub resultset
 {
     my $dbh       = shift;
@@ -231,31 +394,25 @@ sub resultset
     };
 }
 
-BEGIN {
-    *it         = *iterate;
-    *rs         = *resultset;
-    *result_set = *resultset;
-}
+=head2 result_set
+
+An alias for C<resultset>
+
+=cut
+
+BEGIN { *result_set = *resultset }
+
+=head2 rs
+
+An alias for C<resultset>
+
+=cut
+
+BEGIN { *rs = *resultset }
 
 1;
 
 __END__
-
-=pod
-
-=encoding UTF-8
-
-=head1 NAME
-
-DBIx::Squirrel::db - DBI database handle (DBI::db) subclass
-
-=head1 VERSION
-
-2020.11.00
-
-=head1 SYNOPSIS
-
-=head1 DESCRIPTION
 
 =head1 AUTHOR
 
