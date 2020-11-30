@@ -35,13 +35,9 @@ DBIx::Squirrel::db - DBI database handle (DBI::db) subclass
 
     $sth = $dbh->prepare($statement);
     $sth = $dbh->prepare($statement, \%attr);
-    $sth = $dbh->prepare($original_sth);
-    $sth = $dbh->prepare($original_sth, \%attr);
 
     $sth = $dbh->prepare_cached($statement);
     $sth = $dbh->prepare_cached($statement, \%attr);
-    $sth = $dbh->prepare_cached($original_sth);
-    $sth = $dbh->prepare_cached($original_sth, \%attr);
 
     $itor = $dbh->iterate($statement);
     $itor = $dbh->iterate($statement, \%attr);
@@ -171,8 +167,6 @@ sub do
 
     $sth = $dbh->prepare($statement);
     $sth = $dbh->prepare($statement, \%attr);
-    $sth = $dbh->prepare($original_sth);
-    $sth = $dbh->prepare($original_sth, \%attr);
 
 =cut
 
