@@ -4,8 +4,6 @@ use warnings;
 package    # hide from PAUSE
   DBIx::Squirrel::util;
 
-## no critic (TestingAndDebugging::ProhibitNoStrict)
-
 BEGIN {
     require Exporter;
     @DBIx::Squirrel::util::ISA         = ( 'Exporter' );
@@ -26,7 +24,8 @@ BEGIN {
 use Carp;
 use Data::Dumper::Concise;
 
-sub throw {
+sub throw
+{
     @_ = do {
         if ( @_ ) {
             if ( @_ > 1 ) {
@@ -45,7 +44,8 @@ sub throw {
     goto &Carp::confess;
 }
 
-sub whine {
+sub whine
+{
     @_ = do {
         if ( @_ ) {
             if ( @_ > 1 ) {
@@ -64,6 +64,35 @@ sub whine {
     goto &Carp::cluck;
 }
 
-## use critic
-
 1;
+
+__END__
+
+=pod
+
+=encoding UTF-8
+
+=head1 NAME
+
+DBIx::Squirrel::util - exports tools used by DBIx-Squirrel modules
+
+=head1 VERSION
+
+2020.11.00
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+=head1 AUTHOR
+
+I Campbell <cpanic@cpan.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2020 by I Campbell.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

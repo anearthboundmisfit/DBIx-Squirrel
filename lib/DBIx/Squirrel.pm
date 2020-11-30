@@ -1,3 +1,17 @@
+=pod
+
+=encoding UTF-8
+
+=head1 NAME
+
+DBIx::Squirrel - A module for working with databases
+
+=head1 VERSION
+
+2020.11.00
+
+=cut 
+
 use strict;
 use warnings;
 
@@ -39,18 +53,6 @@ BEGIN {
 1;
 
 __END__
-
-=pod
-
-=encoding UTF-8
-
-=head1 NAME
-
-DBIx::Squirrel - A Perl module for working with databases.
-
-=head1 VERSION
-
-2020.11.00
 
 =head1 SYNOPSIS
 
