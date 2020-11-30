@@ -4,8 +4,6 @@ use warnings;
 package    # hide from PAUSE
   DBIx::Squirrel::db;
 
-## no critic (TestingAndDebugging::ProhibitNoStrict)
-
 BEGIN {
     @DBIx::Squirrel::db::ISA     = ( 'DBI::db' );
     *DBIx::Squirrel::db::VERSION = *DBIx::Squirrel::VERSION;
@@ -239,6 +237,35 @@ BEGIN {
     *result_set = *resultset;
 }
 
-## use critic
-
 1;
+
+__END__
+
+=pod
+
+=encoding UTF-8
+
+=head1 NAME
+
+DBIx::Squirrel::db - DBI database handle (DBI::db) subclass
+
+=head1 VERSION
+
+2020.11.00
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+=head1 AUTHOR
+
+I Campbell <cpanic@cpan.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2020 by I Campbell.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

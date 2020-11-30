@@ -29,23 +29,8 @@ databases using database session handles.
 
 =head1 METHODS
 
+
 =cut
-
-use strict;
-use warnings;
-
-package    # hide from PAUSE
-  DBIx::Squirrel::dr;
-
-BEGIN {
-    @DBIx::Squirrel::dr::ISA     = ( 'DBI::dr' );
-    *DBIx::Squirrel::dr::VERSION = *DBIx::Squirrel::VERSION;
-}
-
-use namespace::autoclean;
-use DBI;
-use Scalar::Util 'blessed';
-use DBIx::Squirrel::db;
 
 =head2 connect_clone
 
@@ -61,17 +46,8 @@ The attributes for the cloned session are the same as those used for the
 original session, with any other attributes in C<\%attr> merged over
 them.
 
-=cut
 
-sub connect_clone
-{
-    my ( $package, $dbh, $attr ) = @_;
-    if ( my $clone = $attr ? $dbh->clone( $attr ) : $dbh->clone ) {
-        bless $clone, 'DBIx::Squirrel::db';
-    } else {
-        undef;
-    }
-}
+=cut
 
 =head2 connect_cached
 
@@ -92,33 +68,8 @@ the ping method fails.
 For more detailed information about this method, please refer to the L<DBI>
 documentation.
 
+
 =cut
-
-sub connect_cached
-{
-    if ( my $handle = shift->DBI::connect_cached( @_ ) ) {
-        bless $handle, 'DBIx::Squirrel::db';
-    } else {
-        undef;
-    }
-}
-
-sub _is_db_handle
-{
-    if ( ref $_[ 0 ] ) {
-        if ( my $blessed = blessed( $_[ 0 ] ) ) {
-            if ( $_[ 0 ]->isa( 'DBI::db' ) ) {
-                $blessed;
-            } else {
-                undef;
-            }
-        } else {
-            undef;
-        }
-    } else {
-        undef;
-    }
-}
 
 =head2 connect
 
@@ -147,24 +98,8 @@ returning a database handle if the connection succeeds.
 For more detailed information about this method, please refer to the L<DBI>
 documentation.
 
+
 =cut
-
-sub connect
-{
-    if ( @_ > 1 && _is_db_handle( $_[ 1 ] ) ) {
-        goto &connect_clone;
-    } else {
-        if ( my $handle = shift->DBI::connect( @_ ) ) {
-            bless $handle, 'DBIx::Squirrel::db';
-        } else {
-            undef;
-        }
-    }
-}
-
-1;
-
-__END__
 
 =head1 AUTHOR
 
@@ -177,4 +112,6 @@ This software is copyright (c) 2020 by I Campbell.
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
 
+
 =cut
+
