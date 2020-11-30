@@ -1,3 +1,34 @@
+=pod
+
+=encoding UTF-8
+
+=head1 NAME
+
+DBIx::Squirrel::st - DBI statement handle (DBI::st) subclass
+
+=head1 VERSION
+
+2020.11.00
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+This module subclasses DBI's DBI::st module, providing a number of progressive
+and additive enhancements to statement handle objects:
+
+=over
+
+=item * the binding of parameter value;
+
+=item * statement execution;
+
+=item * the creation of result set iterators.
+
+=back
+
+=cut
+
 use strict;
 use warnings;
 
@@ -58,18 +89,6 @@ sub _private
     } else {
         wantarray ? () : undef;
     }
-}
-
-sub execute
-{
-    my $sth = shift;
-    if ( $sth->{ Active } && $DBIx::Squirrel::FINISH_ACTIVE_ON_EXECUTE ) {
-        $sth->finish;
-    }
-    if ( @_ ) {
-        $sth->bind( @_ );
-    }
-    $sth->DBI::st::execute;
 }
 
 sub bind
@@ -171,44 +190,41 @@ sub bind_param
     wantarray ? %b : \%b;
 }
 
+sub execute
+{
+    my $sth = shift;
+    if ( $sth->{ Active } && $DBIx::Squirrel::FINISH_ACTIVE_ON_EXECUTE ) {
+        $sth->finish;
+    }
+    if ( @_ ) {
+        $sth->bind( @_ );
+    }
+    $sth->DBI::st::execute;
+}
+
 sub prepare
 {
     my $sth = shift;
     $sth->{ Database }->prepare( $sth->{ Statement }, @_ );
 }
 
+BEGIN { *clone = *prepare }
+
 sub iterate { DBIx::Squirrel::it->new( shift, @_ ) }
+
+BEGIN { *it = *iterate }
 
 sub resultset { DBIx::Squirrel::ResultSet->new( shift, @_ ) }
 
+BEGIN { *rs = *resultset }
+
 sub iterator { $_[ 0 ]->_private->{ itor } }
 
-BEGIN {
-    *itor  = *iterator;
-    *it    = *iterate;
-    *rs    = *resultset;
-    *clone = *prepare;
-}
+BEGIN { *itor = *iterator }
 
 1;
 
 __END__
-
-=pod
-
-=encoding UTF-8
-
-=head1 NAME
-
-DBIx::Squirrel::st - DBI statement handle (DBI::st) subclass
-
-=head1 VERSION
-
-2020.11.00
-
-=head1 SYNOPSIS
-
-=head1 DESCRIPTION
 
 =head1 AUTHOR
 

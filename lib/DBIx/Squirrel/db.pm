@@ -66,7 +66,7 @@ DBIx::Squirrel::db - DBI database handle (DBI::db) subclass
 =head1 DESCRIPTION
 
 This module subclasses DBI's DBI::db module, providing a number of progressive
-and additive enhancements:
+and additive enhancements to database handle objects:
 
 =over
 
