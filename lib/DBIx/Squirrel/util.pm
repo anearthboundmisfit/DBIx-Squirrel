@@ -86,7 +86,7 @@ DBIx::Squirrel::util - exports tools used by DBIx-Squirrel modules
 
 =head1 AUTHOR
 
-I Campbell <cpanic@cpan.org>
+I Campbell E<lt>cpanic@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
