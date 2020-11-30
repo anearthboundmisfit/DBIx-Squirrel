@@ -23,8 +23,6 @@ DBIx::Squirrel::dr - DBI database driver (DBI::dr) subclass
     $dbh = DBI->connect_cached($data_source, $username, $password, \%attr)
       or die $DBI::Squirrel::errstr;
 
-    # ADDITIONS AND ENHANCEMENTS TO STANDARD DBI BEHAVIOURS
-
     # New "connect_clone" method. Standard DBI connections may also be cloned
     # and upgraded.
     $dbh = DBIx::Squirrel->connect_clone($other_dbh, \%attr);
