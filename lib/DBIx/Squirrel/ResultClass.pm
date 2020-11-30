@@ -120,7 +120,7 @@ DBIx::Squirrel::ResultClass - DBIx-Squirrel result (row) base class
 
 =head1 AUTHOR
 
-I Campbell <cpanic@cpan.org>
+I Campbell E<lt>cpanic@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 

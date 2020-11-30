@@ -212,7 +212,7 @@ DBIx::Squirrel::st - DBI statement handle (DBI::st) subclass
 
 =head1 AUTHOR
 
-I Campbell <cpanic@cpan.org>
+I Campbell E<lt>cpanic@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 

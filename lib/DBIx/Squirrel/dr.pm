@@ -22,6 +22,17 @@ DBIx::Squirrel::dr - DBI database driver (DBI::dr) subclass
     # also be cloned and upgraded.
     $dbh = DBIx::Squirrel->connect($other_dbh, \%attr);
 
+    # Use the traditional methods to connect to datasources using connection
+    # parameters.
+    $dbh = DBI->connect($data_source, $username, $password)
+      or die $DBI::Squirrel::errstr;
+    $dbh = DBI->connect($data_source, $username, $password, \%attr)
+      or die $DBI::Squirrel::errstr;
+    $dbh = DBI->connect_cached($data_source, $username, $password)
+      or die $DBI::Squirrel::errstr;
+    $dbh = DBI->connect_cached($data_source, $username, $password, \%attr)
+      or die $DBI::Squirrel::errstr;
+
 =head1 DESCRIPTION
 
 This module subclasses DBI's DBI::dr module to provide a new way to connect to
@@ -51,6 +62,7 @@ use DBIx::Squirrel::db;
 
 =head3 Clone a database session
 
+    $clone_dbh = DBI::Squirrel->connect_clone($original_dbh);
     $clone_dbh = DBI::Squirrel->connect_clone($original_dbh, \%attr);
 
 Use this method to clone another database session as a DBIx-Squirrel database
@@ -124,6 +136,7 @@ sub _is_db_handle
 
 =head3 Clone a database session
 
+    $clone_dbh = DBI::Squirrel->connect($original_dbh);
     $clone_dbh = DBI::Squirrel->connect($original_dbh, \%attr);
 
 Invoke C<connect> this way to clone another database session as a DBIx-Squirrel
