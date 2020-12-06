@@ -48,6 +48,7 @@ BEGIN {
     *DEFAULT_MAX_ROWS      = *DBIx::Squirrel::it::DEFAULT_MAX_ROWS;
     *BUF_MULTIPLIER        = *DBIx::Squirrel::it::BUF_MULTIPLIER;
     *BUF_MAX_SIZE          = *DBIx::Squirrel::it::BUF_MAX_SIZE;
+    *SQL_ABSTRACT          = *DBIx::Squirrel::db::SQL_ABSTRACT;
 }
 
 1;
