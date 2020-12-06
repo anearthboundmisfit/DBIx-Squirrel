@@ -1051,6 +1051,12 @@ sub test_the_basics {
         sub { "Media type: $_" },
     )->all;
 
+    diag "$_\n" foreach $standard_ekorn_dbh->select('media_types')->rs(
+        sub { $_->Name },
+        sub { "Media type: $_" },
+    )->all;
+
+
     $standard_ekorn_dbh->disconnect;
     $standard_dbi_dbh->disconnect;
 

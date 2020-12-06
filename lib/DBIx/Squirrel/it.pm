@@ -304,6 +304,8 @@ sub buffer_is_empty
     }
 }
 
+BEGIN { *buffer_is_still_empty = *buffer_is_empty }
+
 sub transform
 {
     $_ = do {
@@ -426,6 +428,10 @@ sub count { scalar @{ scalar shift->all( @_ ) } }
 
 sub resultset { shift->sth->resultset( @_ ) }
 
+BEGIN { *result_set = *resultset }
+
+BEGIN { *rs = *resultset }
+
 sub sth { $_[ 0 ]->_private->{ st } }
 
 sub pending_execution { $_[ 0 ]->_private->{ ex } }
@@ -435,15 +441,6 @@ sub not_pending_execution { not $_[ 0 ]->_private->{ ex } }
 sub done { $_[ 0 ]->_private->{ fi } }
 
 sub not_done { not $_[ 0 ]->_private->{ fi } }
-
-BEGIN {
-    *buffer_is_still_empty = *buffer_is_empty;
-    *resultset             = *resultset;
-    *rs                    = *resultset;
-    *reit                  = *reiterate;
-    *iterate               = *reiterate;
-    *it                    = *reiterate;
-}
 
 1;
 

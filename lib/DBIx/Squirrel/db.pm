@@ -89,6 +89,7 @@ BEGIN {
 
 use namespace::autoclean;
 use Scalar::Util 'blessed', 'reftype';
+use SQL::Abstract;
 use DBIx::Squirrel::util 'throw';
 use DBIx::Squirrel::st;
 use DBIx::Squirrel::ResultSet;
@@ -99,9 +100,35 @@ use constant {
     E_EXP_REF       => 'Expected a reference to a HASH or ARRAY',
 };
 
+our $SQL_ABSTRACT = SQL::Abstract->new;
+
 =head1 METHODS
 
+=head2 select
+
+=cut
+
+sub select
+{
+    my $dbh = shift;
+    my $sql = do {
+        if (   ref $_[ -1 ]
+            && blessed( $_[ -1 ] )
+            && $_[ -1 ]->isa( 'SQL::Abstract' ) )
+        {
+            pop;
+        } else {
+            $SQL_ABSTRACT;
+        }
+    };
+    my ( $statement, @params ) = $sql->select( @_ );
+    my ( undef,      $sth )    = $dbh->do( $statement, @params );
+    $sth;
+}
+
 =head2 do
+
+=head3 Prepare and execute a statement
 
     $rows = $dbh->do($statement);
     $rows = $dbh->do($statement, \%attr);
@@ -114,6 +141,13 @@ use constant {
     $rows = $dbh->do($statement, \%attr, %bind_values);
     $rows = $dbh->do($statement, \%attr, \%bind_values);
 
+Prepares and executes a single statement, returning the number of rows affected
+or undef on error. When called in Scalar Context, behaviour is not unlike that
+of the DBI implementation method.
+
+The DBIx-Squirrel implementation alows for a slightly richer variety of calling
+styles, due to the greater number of bind value schemes supported.
+
     ($rows, $sth) = $dbh->do($statement);
     ($rows, $sth) = $dbh->do($statement, \%attr);
     ($rows, $sth) = $dbh->do($statement, @bind_values);
@@ -123,6 +157,10 @@ use constant {
     ($rows, $sth) = $dbh->do($statement, \%attr, \@bind_values);
     ($rows, $sth) = $dbh->do($statement, \%attr, %bind_values);
     ($rows, $sth) = $dbh->do($statement, \%attr, \%bind_values);
+
+When called in List Context, both the number of rows affected and the prepared
+statement's handle are returned in that order, making the C<do> method useful
+for SELECT-queries.
 
 =cut
 
@@ -163,7 +201,75 @@ sub do
     wantarray ? ( $res, $sth ) : $res;
 }
 
+=head2 update
+
+=cut
+
+sub update
+{
+    my $dbh = shift;
+    my $sql = do {
+        if (   ref $_[ -1 ]
+            && blessed( $_[ -1 ] )
+            && $_[ -1 ]->isa( 'SQL::Abstract' ) )
+        {
+            pop;
+        } else {
+            $SQL_ABSTRACT;
+        }
+    };
+    my ( $statement, @params ) = $sql->update( @_ );
+    my ( $res,       $sth )    = $dbh->do( $statement, @params );
+    wantarray ? ( $res, $sth ) : $res;
+}
+
+=head2 insert
+
+=cut
+
+sub insert
+{
+    my $dbh = shift;
+    my $sql = do {
+        if (   ref $_[ -1 ]
+            && blessed( $_[ -1 ] )
+            && $_[ -1 ]->isa( 'SQL::Abstract' ) )
+        {
+            pop;
+        } else {
+            $SQL_ABSTRACT;
+        }
+    };
+    my ( $statement, @params ) = $sql->insert( @_ );
+    my ( $res,       $sth )    = $dbh->do( $statement, @params );
+    wantarray ? ( $res, $sth ) : $res;
+}
+
+=head2 delete
+
+=cut
+
+sub delete
+{
+    my $dbh = shift;
+    my $sql = do {
+        if (   ref $_[ -1 ]
+            && blessed( $_[ -1 ] )
+            && $_[ -1 ]->isa( 'SQL::Abstract' ) )
+        {
+            pop;
+        } else {
+            $SQL_ABSTRACT;
+        }
+    };
+    my ( $statement, @params ) = $sql->delete( @_ );
+    my ( $res,       $sth )    = $dbh->do( $statement, @params );
+    wantarray ? ( $res, $sth ) : $res;
+}
+
 =head2 prepare
+
+=head3 Prepare a statement for execution
 
     $sth = $dbh->prepare($statement);
     $sth = $dbh->prepare($statement, \%attr);

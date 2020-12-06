@@ -52,6 +52,8 @@ use DBIx::Squirrel::db;
 
 =head2 connect_clone
 
+=head3 Connect to cloned database session
+
     $clone_dbh = DBI::Squirrel->connect_clone($original_dbh);
     $clone_dbh = DBI::Squirrel->connect_clone($original_dbh, \%attr);
 
@@ -79,6 +81,8 @@ sub connect_clone
 }
 
 =head2 connect_cached
+
+=head3 Connect to cached database session
 
     $dbh = DBI->connect_cached($data_source, $username, $password)
       or die $DBI::Squirrel::errstr;
@@ -125,6 +129,8 @@ sub _is_db_handle
 
 =head2 connect
 
+=head3 Connect to database
+
     $dbh = DBI->connect($data_source, $username, $password)
       or die $DBI::Squirrel::errstr;
     $dbh = DBI->connect($data_source, $username, $password, \%attr)
@@ -136,7 +142,7 @@ returning a DBIx-Squirrel database handle if the connection succeeds.
 For more detailed information about this style of method invocation, please
 refer to the L<DBI> documentation.
 
-DBIx-Squirrel provides for an alternative calling style:
+=head3 Connect to cloned database session
 
     $clone_dbh = DBI::Squirrel->connect($original_dbh);
     $clone_dbh = DBI::Squirrel->connect($original_dbh, \%attr);
