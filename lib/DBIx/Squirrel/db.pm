@@ -121,8 +121,7 @@ sub select
             $SQL_ABSTRACT;
         }
     };
-    my ( $statement, @params ) = $sql->select( @_ );
-    my ( undef,      $sth )    = $dbh->do( $statement, @params );
+    my ( undef, $sth ) = $dbh->do( $sql->select( @_ ) );
     $sth;
 }
 
@@ -140,6 +139,7 @@ sub select
     $rows = $dbh->do($statement, \%attr, \@bind_values);
     $rows = $dbh->do($statement, \%attr, %bind_values);
     $rows = $dbh->do($statement, \%attr, \%bind_values);
+    $rows = $dbh->do($statement, undef, \%bind_values);
 
 Prepares and executes a single statement, returning the number of rows affected
 or undef on error. When called in Scalar Context, behaviour is not unlike that
@@ -147,6 +147,8 @@ of the DBI implementation method.
 
 The DBIx-Squirrel implementation alows for a slightly richer variety of calling
 styles, due to the greater number of bind value schemes supported.
+
+=head3 Prepare and execute a statement, and return statement handle
 
     ($rows, $sth) = $dbh->do($statement);
     ($rows, $sth) = $dbh->do($statement, \%attr);
@@ -157,10 +159,11 @@ styles, due to the greater number of bind value schemes supported.
     ($rows, $sth) = $dbh->do($statement, \%attr, \@bind_values);
     ($rows, $sth) = $dbh->do($statement, \%attr, %bind_values);
     ($rows, $sth) = $dbh->do($statement, \%attr, \%bind_values);
+    ($rows, $sth) = $dbh->do($statement, undef, \%bind_values);
 
 When called in List Context, both the number of rows affected and the prepared
 statement's handle are returned in that order, making the C<do> method useful
-for SELECT-queries.
+for preparing and executing SELECT-queries.
 
 =cut
 
@@ -218,8 +221,7 @@ sub update
             $SQL_ABSTRACT;
         }
     };
-    my ( $statement, @params ) = $sql->update( @_ );
-    my ( $res,       $sth )    = $dbh->do( $statement, @params );
+    my ( $res, $sth ) = $dbh->do( $sql->update( @_ ) );
     wantarray ? ( $res, $sth ) : $res;
 }
 
@@ -240,8 +242,7 @@ sub insert
             $SQL_ABSTRACT;
         }
     };
-    my ( $statement, @params ) = $sql->insert( @_ );
-    my ( $res,       $sth )    = $dbh->do( $statement, @params );
+    my ( $res, $sth ) = $dbh->do( $sql->insert( @_ ) );
     wantarray ? ( $res, $sth ) : $res;
 }
 
@@ -262,8 +263,7 @@ sub delete
             $SQL_ABSTRACT;
         }
     };
-    my ( $statement, @params ) = $sql->delete( @_ );
-    my ( $res,       $sth )    = $dbh->do( $statement, @params );
+    my ( $res, $sth ) = $dbh->do( $sql->delete( @_ ) );
     wantarray ? ( $res, $sth ) : $res;
 }
 
