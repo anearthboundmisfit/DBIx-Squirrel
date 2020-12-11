@@ -94,13 +94,25 @@ use DBIx::Squirrel::util 'throw';
 use DBIx::Squirrel::st;
 use DBIx::Squirrel::ResultSet;
 
+BEGIN {
+    $DBIx::Squirrel::db::SQL_ABSTRACT = do {
+        eval {
+            require SQL::Abstract::More;
+            SQL::Abstract::More->new;
+        } or eval {
+            require SQL::Abstract;
+            SQL::Abstract->new;
+        } or undef;
+    };
+}
+
 use constant {
     E_EXP_STATEMENT => 'Expected a statement',
     E_EXP_STH       => 'Expected a statement handle',
     E_EXP_REF       => 'Expected a reference to a HASH or ARRAY',
 };
 
-our $SQL_ABSTRACT = SQL::Abstract->new;
+our $SQL_ABSTRACT;
 
 =head1 METHODS
 
