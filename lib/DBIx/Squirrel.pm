@@ -219,7 +219,7 @@ __END__
     );
     print "$_\n" while $rs->next;
 
-    $dbh->rs(
+    print "$_\n" for $dbh->rs(
         q/SELECT MediaTypeId, Name FROM media_types/,
         sub { $_->Name },
     )->all;
