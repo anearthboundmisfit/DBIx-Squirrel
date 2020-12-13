@@ -1033,25 +1033,39 @@ sub test_the_basics {
     is_deeply $exp, $got, 'count'
       or dump_val { exp => $exp, got => $got };
 
-    $sth->finish;
-
-    $sth = $standard_ekorn_dbh->prepare(
-        'SELECT MediaTypeId, Name FROM media_types',
+    ( $exp, $got ) = (
+        [
+            'MPEG audio file',
+            'Protected AAC audio file',
+            'Protected MPEG-4 video file',
+            'Purchased AAC audio file',
+            'AAC audio file',
+        ],
+        [
+            do {
+                $sth = $standard_ekorn_dbh->prepare(
+                    'SELECT MediaTypeId, Name FROM media_types',
+                );
+                $rs = $sth->rs( sub { $_->get_column( 'Name' ) } );
+                my @ary;
+                push @ary, $_ while $rs->next;
+                @ary;
+            },
+        ]
     );
-    $rs = $sth->rs( sub { $_->get_column( 'Name' ) } => sub { "Media type: $_" }
-    );
-    diag "$_\n" while $rs->next;
+    is_deeply $exp, $got, 'rs, get_column'
+      or dump_val { exp => $exp, got => $got };
 
     $it = $sth->it( sub { $_->{ Name } } )->reset( {} );
-    diag "$_\n" foreach $it->all;
+    diag "$_\n" for $it->all;
 
-    diag "$_\n" foreach $standard_ekorn_dbh->rs(
+    diag "$_\n" for $standard_ekorn_dbh->rs(
         'SELECT MediaTypeId, Name FROM media_types',
         sub { $_->Name },
         sub { "Media type: $_" },
     )->all;
 
-    diag "$_\n" foreach $standard_ekorn_dbh->select('media_types')->rs(
+    diag "$_\n" for $standard_ekorn_dbh->select('media_types')->rs(
         sub { $_->Name },
         sub { "Media type: $_" },
     )->all;

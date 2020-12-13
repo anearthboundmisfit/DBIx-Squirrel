@@ -204,16 +204,14 @@ __END__
         print $_->name, "\n";
     }
 
-    # Use callbacks to declare how result set and iterator methods
-    # should transform, or otherwise process, rows prior to returning
-    # a result to the caller.
+    # Use lambdas to define how results are processed.
     #
     $it = $sth->it(
         sub { $_->{Name} }
     )->reset({});
     print "$_\n" foreach $it->all;
 
-    # Create callback chains, too.
+    # Lambdas may be chained
     #
     $rs = $sth->rs(
         sub { $_->Name },
@@ -221,11 +219,13 @@ __END__
     );
     print "$_\n" while $rs->next;
 
-    $dbh->rs(
+    print "$_\n" for $dbh->rs(
         q/SELECT MediaTypeId, Name FROM media_types/,
         sub { $_->Name },
-        sub { "Media type: $_" },
-        sub { print "$_\n"}
+    )->all;
+
+    print "$_\n" for $dbh->select('media_types')->rs(
+        sub { $_->Name },
     )->all;
 
 =head1 DESCRIPTION
