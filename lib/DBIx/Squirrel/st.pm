@@ -44,7 +44,7 @@ use namespace::autoclean;
 use DBI;
 use Scalar::Util 'reftype';
 use DBIx::Squirrel::util 'throw', 'whine';
-use DBIx::Squirrel::it;
+use DBIx::Squirrel::itor;
 use DBIx::Squirrel::ResultSet;
 
 use constant {
@@ -210,7 +210,7 @@ sub prepare
 
 BEGIN { *clone = *prepare }
 
-sub iterate { DBIx::Squirrel::it->new( shift, @_ ) }
+sub iterate { DBIx::Squirrel::itor->new( shift, @_ ) }
 
 BEGIN { *it = *iterate }
 

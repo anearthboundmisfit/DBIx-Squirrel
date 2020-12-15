@@ -4,14 +4,14 @@ use warnings;
 package DBIx::Squirrel::ResultSet;
 
 BEGIN {
-    @DBIx::Squirrel::ResultSet::ISA     = ( 'DBIx::Squirrel::it' );
+    @DBIx::Squirrel::ResultSet::ISA     = ( 'DBIx::Squirrel::itor' );
     *DBIx::Squirrel::ResultSet::VERSION = *DBIx::Squirrel::VERSION;
 }
 
 use namespace::autoclean;
 use Scalar::Util 'reftype', 'weaken';
 use Sub::Name 'subname';
-use DBIx::Squirrel::it;
+use DBIx::Squirrel::itor;
 use DBIx::Squirrel::result;
 
 sub DESTROY
