@@ -38,7 +38,7 @@ sub diag_result {
 sub result {
     my ( $sth ) = @_;
     my ( $summary, @rows ) = do {
-        my @res = split /\n/, capture_stdout { $sth->dump_results };
+        my @res = split /\n/, capture { $sth->dump_results };
         ( pop @res, @res );
     };
     return join "\n", (
