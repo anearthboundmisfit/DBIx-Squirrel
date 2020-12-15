@@ -12,7 +12,7 @@ use namespace::autoclean;
 use Scalar::Util 'reftype', 'weaken';
 use Sub::Name 'subname';
 use DBIx::Squirrel::it;
-use DBIx::Squirrel::ResultClass;
+use DBIx::Squirrel::result;
 
 sub DESTROY
 { ## no critic (TestingAndDebugging::ProhibitNoStrict)
@@ -27,7 +27,7 @@ sub DESTROY
 
 sub class { ref $_[ 0 ] ? ref $_[ 0 ] : $_[ 0 ] }
 
-sub resultclass { 'DBIx::Squirrel::ResultClass' }
+sub resultclass { 'DBIx::Squirrel::result' }
 
 sub rowclass
 {
