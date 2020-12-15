@@ -827,14 +827,14 @@ sub test_the_basics {
     );
 
     $it = $sth->iterate( name => 'AAC audio file' );
-    isa_ok $it, 'DBIx::Squirrel::it';
+    isa_ok $it, 'DBIx::Squirrel::itor';
 
     ( $exp, $got ) = (
         bless( {
                 MaxRows => 10,
                 Slice   => [],
             },
-            'DBIx::Squirrel::it'
+            'DBIx::Squirrel::itor'
         ),
         $it,
     );

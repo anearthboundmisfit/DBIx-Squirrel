@@ -26,7 +26,7 @@ use DBI;
 use DBIx::Squirrel::dr;
 use DBIx::Squirrel::db;
 use DBIx::Squirrel::st;
-use DBIx::Squirrel::it;
+use DBIx::Squirrel::itor;
 use DBIx::Squirrel::ResultSet;
 use DBIx::Squirrel::result;
 
@@ -44,10 +44,10 @@ BEGIN {
     *lasth                 = *DBI::lasth;
     *state                 = *DBI::state;
     *NORMALIZED_STATEMENTS = *NORMALISED_STATEMENTS;
-    *DEFAULT_SLICE         = *DBIx::Squirrel::it::DEFAULT_SLICE;
-    *DEFAULT_MAX_ROWS      = *DBIx::Squirrel::it::DEFAULT_MAX_ROWS;
-    *BUF_MULTIPLIER        = *DBIx::Squirrel::it::BUF_MULTIPLIER;
-    *BUF_MAX_SIZE          = *DBIx::Squirrel::it::BUF_MAX_SIZE;
+    *DEFAULT_SLICE         = *DBIx::Squirrel::itor::DEFAULT_SLICE;
+    *DEFAULT_MAX_ROWS      = *DBIx::Squirrel::itor::DEFAULT_MAX_ROWS;
+    *BUF_MULTIPLIER        = *DBIx::Squirrel::itor::BUF_MULTIPLIER;
+    *BUF_MAX_SIZE          = *DBIx::Squirrel::itor::BUF_MAX_SIZE;
     *SQL_ABSTRACT          = *DBIx::Squirrel::db::SQL_ABSTRACT;
 }
 

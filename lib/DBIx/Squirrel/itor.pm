@@ -2,10 +2,10 @@ use strict;
 use warnings;
 
 package    # hide from PAUSE
-  DBIx::Squirrel::it;
+  DBIx::Squirrel::itor;
 
 BEGIN {
-    *DBIx::Squirrel::it::VERSION = *DBIx::Squirrel::VERSION;
+    *DBIx::Squirrel::itor::VERSION = *DBIx::Squirrel::VERSION;
 }
 
 use namespace::autoclean;
@@ -452,7 +452,7 @@ __END__
 
 =head1 NAME
 
-DBIx::Squirrel::it - DBIx-Squirrel iterator base class
+DBIx::Squirrel::itor - DBIx-Squirrel iterator base class
 
 =head1 VERSION
 
