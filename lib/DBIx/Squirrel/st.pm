@@ -45,7 +45,7 @@ use DBI;
 use Scalar::Util 'reftype';
 use DBIx::Squirrel::util 'throw', 'whine';
 use DBIx::Squirrel::itor;
-use DBIx::Squirrel::ResultSet;
+use DBIx::Squirrel::results;
 
 use constant {
     E_INVALID_PLACEHOLDER => 'Cannot bind invalid placeholder (%s)',
@@ -214,7 +214,7 @@ sub iterate { DBIx::Squirrel::itor->new( shift, @_ ) }
 
 BEGIN { *it = *iterate }
 
-sub resultset { DBIx::Squirrel::ResultSet->new( shift, @_ ) }
+sub resultset { DBIx::Squirrel::results->new( shift, @_ ) }
 
 BEGIN { *rs = *resultset }
 

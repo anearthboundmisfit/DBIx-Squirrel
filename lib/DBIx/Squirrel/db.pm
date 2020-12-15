@@ -92,7 +92,7 @@ use Scalar::Util 'blessed', 'reftype';
 use SQL::Abstract;
 use DBIx::Squirrel::util 'throw';
 use DBIx::Squirrel::st;
-use DBIx::Squirrel::ResultSet;
+use DBIx::Squirrel::results;
 
 BEGIN {
     $DBIx::Squirrel::db::SQL_ABSTRACT = do {

@@ -1,11 +1,11 @@
 use strict;
 use warnings;
 
-package DBIx::Squirrel::ResultSet;
+package DBIx::Squirrel::results;
 
 BEGIN {
-    @DBIx::Squirrel::ResultSet::ISA     = ( 'DBIx::Squirrel::itor' );
-    *DBIx::Squirrel::ResultSet::VERSION = *DBIx::Squirrel::VERSION;
+    @DBIx::Squirrel::results::ISA     = ( 'DBIx::Squirrel::itor' );
+    *DBIx::Squirrel::results::VERSION = *DBIx::Squirrel::VERSION;
 }
 
 use namespace::autoclean;
@@ -124,7 +124,7 @@ __END__
 
 =head1 NAME
 
-DBIx::Squirrel::ResultSet - DBIx-Squirrel result set iterator class
+DBIx::Squirrel::results - DBIx-Squirrel result set iterator class
 
 =head1 VERSION
 

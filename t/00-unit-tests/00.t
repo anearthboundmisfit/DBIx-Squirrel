@@ -947,7 +947,7 @@ sub test_the_basics {
     );
 
     ( $exp, $got ) = (
-        bless( { MaxRows => 100, Slice => {} }, 'DBIx::Squirrel::ResultSet' ),
+        bless( { MaxRows => 100, Slice => {} }, 'DBIx::Squirrel::results' ),
         do {
             my $sth = $standard_ekorn_dbh->prepare(
                 join ' ', (
@@ -962,7 +962,7 @@ sub test_the_basics {
       or dump_val { exp => $exp, got => $got };
 
     ( $exp, $got ) = (
-        bless( { MaxRows => 100, Slice => [] }, 'DBIx::Squirrel::ResultSet' ),
+        bless( { MaxRows => 100, Slice => [] }, 'DBIx::Squirrel::results' ),
         do {
             my $sth = $standard_ekorn_dbh->prepare(
                 join ' ', (
@@ -977,7 +977,7 @@ sub test_the_basics {
       or dump_val { exp => $exp, got => $got };
 
     ( $exp, $got ) = (
-        bless( { MaxRows => 10, Slice => [] }, 'DBIx::Squirrel::ResultSet' ),
+        bless( { MaxRows => 10, Slice => [] }, 'DBIx::Squirrel::results' ),
         do {
             $sth->resultset;
         },
