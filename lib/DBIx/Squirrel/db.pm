@@ -49,15 +49,15 @@ DBIx::Squirrel::db - DBI database handle (DBI::db) subclass
     $itor = $dbh->iterate($statement, \%attr, %bind_values);
     $itor = $dbh->iterate($statement, \%attr, \%bind_values);
 
-    $rs = $dbh->resultset($statement);
-    $rs = $dbh->resultset($statement, \%attr);
-    $rs = $dbh->resultset($statement, @bind_values);
-    $rs = $dbh->resultset($statement, \@bind_values);
-    $rs = $dbh->resultset($statement, %bind_values);
-    $rs = $dbh->resultset($statement, \%attr, @bind_values);
-    $rs = $dbh->resultset($statement, \%attr, \@bind_values);
-    $rs = $dbh->resultset($statement, \%attr, %bind_values);
-    $rs = $dbh->resultset($statement, \%attr, \%bind_values);
+    $res = $dbh->results($statement);
+    $res = $dbh->results($statement, \%attr);
+    $res = $dbh->results($statement, @bind_values);
+    $res = $dbh->results($statement, \@bind_values);
+    $res = $dbh->results($statement, %bind_values);
+    $res = $dbh->results($statement, \%attr, @bind_values);
+    $res = $dbh->results($statement, \%attr, \@bind_values);
+    $res = $dbh->results($statement, \%attr, %bind_values);
+    $res = $dbh->results($statement, \%attr, \%bind_values);
 
 =head1 DESCRIPTION
 
@@ -451,21 +451,21 @@ An alias for C<iterate>
 
 BEGIN { *it = *iterate }
 
-=head2 resultset
+=head2 results
 
-    $rs = $dbh->resultset($statement);
-    $rs = $dbh->resultset($statement, \%attr);
-    $rs = $dbh->resultset($statement, @bind_values);
-    $rs = $dbh->resultset($statement, \@bind_values);
-    $rs = $dbh->resultset($statement, %bind_values);
-    $rs = $dbh->resultset($statement, \%attr, @bind_values);
-    $rs = $dbh->resultset($statement, \%attr, \@bind_values);
-    $rs = $dbh->resultset($statement, \%attr, %bind_values);
-    $rs = $dbh->resultset($statement, \%attr, \%bind_values);
+    $res = $dbh->results($statement);
+    $res = $dbh->results($statement, \%attr);
+    $res = $dbh->results($statement, @bind_values);
+    $res = $dbh->results($statement, \@bind_values);
+    $res = $dbh->results($statement, %bind_values);
+    $res = $dbh->results($statement, \%attr, @bind_values);
+    $res = $dbh->results($statement, \%attr, \@bind_values);
+    $res = $dbh->results($statement, \%attr, %bind_values);
+    $res = $dbh->results($statement, \%attr, \%bind_values);
 
 =cut
 
-sub resultset
+sub results
 {
     my $dbh       = shift;
     my $statement = shift;
@@ -474,15 +474,15 @@ sub resultset
             if ( ref $_[ 0 ] ) {
                 if ( reftype( $_[ 0 ] ) eq 'HASH' ) {
                     if ( my $sth = $dbh->prepare( $statement, shift ) ) {
-                        $sth->resultset( @_ );
+                        $sth->results( @_ );
                     }
                 } elsif ( reftype( $_[ 0 ] ) eq 'ARRAY' ) {
                     if ( my $sth = $dbh->prepare( $statement ) ) {
-                        $sth->resultset( @_ );
+                        $sth->results( @_ );
                     }
                 } elsif ( reftype( $_[ 0 ] ) eq 'CODE' ) {
                     if ( my $sth = $dbh->prepare( $statement ) ) {
-                        $sth->resultset( @_ );
+                        $sth->results( @_ );
                     }
                 } else {
                     throw E_EXP_REF;
@@ -490,17 +490,17 @@ sub resultset
             } else {
                 if ( defined $_[ 0 ] ) {
                     if ( my $sth = $dbh->prepare( $statement ) ) {
-                        $sth->resultset( @_ );
+                        $sth->results( @_ );
                     }
                 } else {
                     if ( my $sth = $dbh->prepare( $statement, shift ) ) {
-                        $sth->resultset( @_ );
+                        $sth->results( @_ );
                     }
                 }
             }
         } else {
             if ( my $sth = $dbh->prepare( $statement ) ) {
-                $sth->resultset;
+                $sth->results;
             }
         }
     };
@@ -508,19 +508,19 @@ sub resultset
 
 =head2 result_set
 
-An alias for C<resultset>
+An alias for C<results>
 
 =cut
 
-BEGIN { *result_set = *resultset }
+BEGIN { *result_set = *results }
 
 =head2 rs
 
-An alias for C<resultset>
+An alias for C<results>
 
 =cut
 
-BEGIN { *rs = *resultset }
+BEGIN { *rs = *results }
 
 1;
 

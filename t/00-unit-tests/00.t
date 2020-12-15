@@ -14,7 +14,7 @@ use lib realpath( "$FindBin::Bin/../lib" );
 use T::Database ':all';
 
 our (
-    $sql, $sth, $res, $got, @got, $exp, @exp, $row, $dbh, $it, $stdout, $rs,
+    $sql, $sth, $res, $got, @got, $exp, @exp, $row, $dbh, $it, $stdout, $res,
     $stderr, @hashrefs, @arrayrefs, $standard_dbi_dbh, $standard_ekorn_dbh,
     $cached_ekorn_dbh,
 );
@@ -955,10 +955,10 @@ sub test_the_basics {
                     'FROM media_types',
                 )
             );
-            $sth->resultset->reset( {}, 100 );
+            $sth->results->reset( {}, 100 );
         },
     );
-    is_deeply $exp, $got, 'resultset'
+    is_deeply $exp, $got, 'results'
       or dump_val { exp => $exp, got => $got };
 
     ( $exp, $got ) = (
@@ -970,25 +970,25 @@ sub test_the_basics {
                     'FROM media_types',
                 )
             );
-            $sth->resultset->reset( [], 100 );
+            $sth->results->reset( [], 100 );
         },
     );
-    is_deeply $exp, $got, 'resultset'
+    is_deeply $exp, $got, 'results'
       or dump_val { exp => $exp, got => $got };
 
     ( $exp, $got ) = (
         bless( { MaxRows => 10, Slice => [] }, 'DBIx::Squirrel::results' ),
         do {
-            $sth->resultset;
+            $sth->results;
         },
     );
-    is_deeply $exp, $got, 'resultset'
+    is_deeply $exp, $got, 'results'
       or dump_val { exp => $exp, got => $got };
 
     ( $exp, $got ) = (
         bless( [ 1, "MPEG audio file" ], 'DBIx::Squirrel::Result' ),
         do {
-            $sth->resultset->first;
+            $sth->results->first;
         },
     );
     is_deeply $exp, $got, 'first'
@@ -1017,7 +1017,7 @@ sub test_the_basics {
         ],
         ,
         do {
-            [ $sth->resultset->all ];
+            [ $sth->results->all ];
         },
     );
     is_deeply $exp, $got, 'all'
@@ -1026,8 +1026,8 @@ sub test_the_basics {
     ( $exp, $got ) = (
         5,
         do {
-            my $rs = $sth->resultset;
-            $rs->count;
+            my $res = $sth->results;
+            $res->count;
         },
     );
     is_deeply $exp, $got, 'count'
@@ -1046,9 +1046,9 @@ sub test_the_basics {
                 $sth = $standard_ekorn_dbh->prepare(
                     'SELECT MediaTypeId, Name FROM media_types',
                 );
-                $rs = $sth->rs( sub { $_->get_column( 'Name' ) } );
+                $res = $sth->results( sub { $_->get_column( 'Name' ) } );
                 my @ary;
-                push @ary, $_ while $rs->next;
+                push @ary, $_ while $res->next;
                 @ary;
             },
         ]
@@ -1059,13 +1059,13 @@ sub test_the_basics {
     $it = $sth->it( sub { $_->{ Name } } )->reset( {} );
     diag "$_\n" for $it->all;
 
-    diag "$_\n" for $standard_ekorn_dbh->rs(
+    diag "$_\n" for $standard_ekorn_dbh->results(
         'SELECT MediaTypeId, Name FROM media_types',
         sub { $_->Name },
         sub { "Media type: $_" },
     )->all;
 
-    diag "$_\n" for $standard_ekorn_dbh->select('media_types')->rs(
+    diag "$_\n" for $standard_ekorn_dbh->select('media_types')->results(
         sub { $_->Name },
         sub { "Media type: $_" },
     )->all;

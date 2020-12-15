@@ -21,7 +21,7 @@ sub DESTROY
     my ( $id, $self ) = shift->_id;
     my $class = $self->resultclass;
     no strict 'refs';
-    undef &{ "$class\::resultset" };
+    undef &{ "$class\::results" };
     $self->SUPER::DESTROY;
 } ## use critic
 
@@ -62,15 +62,15 @@ sub _bless
     my ( $rowclass, $self ) = shift->rowclass;
     if ( ref $_[ 0 ] ) {
         my $resultclass = $self->resultclass;
-        unless ( defined &{ $rowclass . '::resultset' } ) {
+        unless ( defined &{ $rowclass . '::results' } ) {
             no strict 'refs';
-            undef &{ "$rowclass\::resultset" };
-            *{ "$rowclass\::resultset" } = do {
-                weaken( my $rs = $self );
-                subname( "$rowclass\::resultset", sub { $rs } );
+            undef &{ "$rowclass\::results" };
+            *{ "$rowclass\::results" } = do {
+                weaken( my $res = $self );
+                subname( "$rowclass\::results", sub { $res } );
             };
             undef &{ "$rowclass\::rs" };
-            *{ "$rowclass\::rs" }  = *{ "$rowclass\::resultset" };
+            *{ "$rowclass\::rs" }  = *{ "$rowclass\::results" };
             @{ "$rowclass\::ISA" } = ( $resultclass );
         }
         $rowclass->new( $_[ 0 ] );

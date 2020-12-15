@@ -199,8 +199,8 @@ __END__
     # case-sensitive.
     #
     $sth = $dbh->prepare('SELECT MediaTypeId, Name FROM media_types');
-    $rs  = $sth->resultset;
-    while ($rs->next) {
+    $res = $sth->results;
+    while ($res->next) {
         print $_->name, "\n";
     }
 
@@ -213,18 +213,18 @@ __END__
 
     # Lambdas may be chained
     #
-    $rs = $sth->rs(
+    $res = $sth->results(
         sub { $_->Name },
         sub { "Media type: $_" },
     );
-    print "$_\n" while $rs->next;
+    print "$_\n" while $res->next;
 
-    print "$_\n" for $dbh->rs(
+    print "$_\n" for $dbh->results(
         q/SELECT MediaTypeId, Name FROM media_types/,
         sub { $_->Name },
     )->all;
 
-    print "$_\n" for $dbh->select('media_types')->rs(
+    print "$_\n" for $dbh->select('media_types')->results(
         sub { $_->Name },
     )->all;
 

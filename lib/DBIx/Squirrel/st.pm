@@ -214,9 +214,9 @@ sub iterate { DBIx::Squirrel::itor->new( shift, @_ ) }
 
 BEGIN { *it = *iterate }
 
-sub resultset { DBIx::Squirrel::results->new( shift, @_ ) }
+sub results { DBIx::Squirrel::results->new( shift, @_ ) }
 
-BEGIN { *rs = *resultset }
+BEGIN { *rs = *results }
 
 sub iterator { $_[ 0 ]->_private->{ itor } }
 
