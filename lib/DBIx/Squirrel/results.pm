@@ -1,11 +1,11 @@
 use strict;
 use warnings;
 
-package DBIx::Squirrel::ResultSet;
+package DBIx::Squirrel::results;
 
 BEGIN {
-    @DBIx::Squirrel::ResultSet::ISA     = ( 'DBIx::Squirrel::itor' );
-    *DBIx::Squirrel::ResultSet::VERSION = *DBIx::Squirrel::VERSION;
+    @DBIx::Squirrel::results::ISA     = ( 'DBIx::Squirrel::itor' );
+    *DBIx::Squirrel::results::VERSION = *DBIx::Squirrel::VERSION;
 }
 
 use namespace::autoclean;
@@ -21,7 +21,7 @@ sub DESTROY
     my ( $id, $self ) = shift->_id;
     my $class = $self->resultclass;
     no strict 'refs';
-    undef &{ "$class\::resultset" };
+    undef &{ "$class\::results" };
     $self->SUPER::DESTROY;
 } ## use critic
 
@@ -62,15 +62,15 @@ sub _bless
     my ( $rowclass, $self ) = shift->rowclass;
     if ( ref $_[ 0 ] ) {
         my $resultclass = $self->resultclass;
-        unless ( defined &{ $rowclass . '::resultset' } ) {
+        unless ( defined &{ $rowclass . '::results' } ) {
             no strict 'refs';
-            undef &{ "$rowclass\::resultset" };
-            *{ "$rowclass\::resultset" } = do {
-                weaken( my $rs = $self );
-                subname( "$rowclass\::resultset", sub { $rs } );
+            undef &{ "$rowclass\::results" };
+            *{ "$rowclass\::results" } = do {
+                weaken( my $res = $self );
+                subname( "$rowclass\::results", sub { $res } );
             };
             undef &{ "$rowclass\::rs" };
-            *{ "$rowclass\::rs" }  = *{ "$rowclass\::resultset" };
+            *{ "$rowclass\::rs" }  = *{ "$rowclass\::results" };
             @{ "$rowclass\::ISA" } = ( $resultclass );
         }
         $rowclass->new( $_[ 0 ] );
@@ -124,7 +124,7 @@ __END__
 
 =head1 NAME
 
-DBIx::Squirrel::ResultSet - DBIx-Squirrel result set iterator class
+DBIx::Squirrel::results - DBIx-Squirrel result set iterator class
 
 =head1 VERSION
 

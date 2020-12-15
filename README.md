@@ -150,8 +150,8 @@ DBIx::Squirrel - A Perl module for working with databases.
     # case-sensitive.
     #
     $sth = $dbh->prepare('SELECT MediaTypeId, Name FROM media_types');
-    $rs  = $sth->resultset;
-    while ($rs->next) {
+    $res  = $sth->results;
+    while ($res->next) {
         print $_->name, "\n";
     }
 
@@ -166,13 +166,13 @@ DBIx::Squirrel - A Perl module for working with databases.
 
     # Create callback chains, too.
     #
-    $rs = $sth->rs(
+    $res = $sth->results(
         sub { $_->Name },
         sub { "Media type: $_" },
     );
-    print "$_\n" while $rs->next;
+    print "$_\n" while $res->next;
 
-    $dbh->rs(
+    $dbh->results(
         q/SELECT MediaTypeId, Name FROM media_types/,
         sub { $_->Name },
         sub { "Media type: $_" },

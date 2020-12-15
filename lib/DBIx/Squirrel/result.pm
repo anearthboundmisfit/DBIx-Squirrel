@@ -22,16 +22,16 @@ our $AUTOLOAD;
 
 sub new { bless $_[ 1 ], ref $_[ 0 ] || $_[ 0 ] }
 
-sub resultclass { $_[ 0 ]->resultset->resultclass }
+sub resultclass { $_[ 0 ]->results->resultclass }
 
-sub rowclass { $_[ 0 ]->resultset->rowclass }
+sub rowclass { $_[ 0 ]->results->rowclass }
 
 sub get_column
 {
     my ( $self, $name ) = ( $_[ 0 ], ( $_[ 1 ] // '' ) );
     $_ = do {
         if ( reftype( $self ) eq 'ARRAY' ) {
-            my $sth = $self->resultset->sth
+            my $sth = $self->results->sth
               or throw E_STH_EXPIRED;
             my $index = $sth->{ NAME_lc_hash }{ lc $name };
             throw E_UNKNOWN_COLUMN, $name unless defined $index;
@@ -69,7 +69,7 @@ sub AUTOLOAD
         no strict 'refs';
         *{ $symbol } = do {
             if ( reftype( $self ) eq 'ARRAY' ) {
-                my $sth = $self->resultset->sth
+                my $sth = $self->results->sth
                   or throw E_STH_EXPIRED;
                 my $index = $sth->{ NAME_lc_hash }{ lc $name };
                 throw E_UNKNOWN_COLUMN, $name unless defined $index;

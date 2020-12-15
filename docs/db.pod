@@ -48,15 +48,15 @@ DBIx::Squirrel::db - DBI database handle (DBI::db) subclass
     $itor = $dbh->iterate($statement, \%attr, %bind_values);
     $itor = $dbh->iterate($statement, \%attr, \%bind_values);
 
-    $rs = $dbh->resultset($statement);
-    $rs = $dbh->resultset($statement, \%attr);
-    $rs = $dbh->resultset($statement, @bind_values);
-    $rs = $dbh->resultset($statement, \@bind_values);
-    $rs = $dbh->resultset($statement, %bind_values);
-    $rs = $dbh->resultset($statement, \%attr, @bind_values);
-    $rs = $dbh->resultset($statement, \%attr, \@bind_values);
-    $rs = $dbh->resultset($statement, \%attr, %bind_values);
-    $rs = $dbh->resultset($statement, \%attr, \%bind_values);
+    $res = $dbh->results($statement);
+    $res = $dbh->results($statement, \%attr);
+    $res = $dbh->results($statement, @bind_values);
+    $res = $dbh->results($statement, \@bind_values);
+    $res = $dbh->results($statement, %bind_values);
+    $res = $dbh->results($statement, \%attr, @bind_values);
+    $res = $dbh->results($statement, \%attr, \@bind_values);
+    $res = $dbh->results($statement, \%attr, %bind_values);
+    $res = $dbh->results($statement, \%attr, \%bind_values);
 
 =head1 DESCRIPTION
 
@@ -144,31 +144,31 @@ An alias for C<iterate>
 
 =cut
 
-=head2 resultset
+=head2 results
 
-    $rs = $dbh->resultset($statement);
-    $rs = $dbh->resultset($statement, \%attr);
-    $rs = $dbh->resultset($statement, @bind_values);
-    $rs = $dbh->resultset($statement, \@bind_values);
-    $rs = $dbh->resultset($statement, %bind_values);
-    $rs = $dbh->resultset($statement, \%attr, @bind_values);
-    $rs = $dbh->resultset($statement, \%attr, \@bind_values);
-    $rs = $dbh->resultset($statement, \%attr, %bind_values);
-    $rs = $dbh->resultset($statement, \%attr, \%bind_values);
+    $res = $dbh->results($statement);
+    $res = $dbh->results($statement, \%attr);
+    $res = $dbh->results($statement, @bind_values);
+    $res = $dbh->results($statement, \@bind_values);
+    $res = $dbh->results($statement, %bind_values);
+    $res = $dbh->results($statement, \%attr, @bind_values);
+    $res = $dbh->results($statement, \%attr, \@bind_values);
+    $res = $dbh->results($statement, \%attr, %bind_values);
+    $res = $dbh->results($statement, \%attr, \%bind_values);
 
 
 =cut
 
 =head2 result_set
 
-An alias for C<resultset>
+An alias for C<results>
 
 
 =cut
 
 =head2 rs
 
-An alias for C<resultset>
+An alias for C<results>
 
 
 =cut

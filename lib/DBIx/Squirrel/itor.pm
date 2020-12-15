@@ -426,11 +426,11 @@ sub next
 
 sub count { scalar @{ scalar shift->all( @_ ) } }
 
-sub resultset { shift->sth->resultset( @_ ) }
+sub results { shift->sth->results( @_ ) }
 
-BEGIN { *result_set = *resultset }
+BEGIN { *result_set = *results }
 
-BEGIN { *rs = *resultset }
+BEGIN { *rs = *results }
 
 sub sth { $_[ 0 ]->_private->{ st } }
 
