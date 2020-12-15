@@ -28,7 +28,7 @@ use DBIx::Squirrel::db;
 use DBIx::Squirrel::st;
 use DBIx::Squirrel::it;
 use DBIx::Squirrel::ResultSet;
-use DBIx::Squirrel::ResultClass;
+use DBIx::Squirrel::result;
 
 our $RELAXED_PARAM_CHECKS     = 0;
 our $FINISH_ACTIVE_ON_EXECUTE = 1;

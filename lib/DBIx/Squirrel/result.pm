@@ -1,10 +1,10 @@
 use strict;
 use warnings;
 
-package DBIx::Squirrel::ResultClass;
+package DBIx::Squirrel::result;
 
 BEGIN {
-    *DBIx::Squirrel::ResultClass::VERSION = *DBIx::Squirrel::VERSION;
+    *DBIx::Squirrel::result::VERSION = *DBIx::Squirrel::VERSION;
 }
 
 use namespace::autoclean;
@@ -108,7 +108,7 @@ __END__
 
 =head1 NAME
 
-DBIx::Squirrel::ResultClass - DBIx-Squirrel result (row) base class
+DBIx::Squirrel::result - DBIx-Squirrel result (row) base class
 
 =head1 VERSION
 
