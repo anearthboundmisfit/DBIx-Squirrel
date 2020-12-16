@@ -1041,6 +1041,7 @@ sub test_the_basics
         ],
         [
             do {
+                $sth->finish;
                 $sth = $standard_ekorn_dbh->prepare(
                     'SELECT MediaTypeId, Name FROM media_types',
                 );

@@ -66,8 +66,8 @@ sub _bless
             no strict 'refs';
             undef &{ "$rowclass\::results" };
             *{ "$rowclass\::results" } = do {
-                weaken( my $res = $self );
-                subname( "$rowclass\::results", sub { $res } );
+                weaken( my $rs = $self );
+                subname( "$rowclass\::results", sub { $rs } );
             };
             undef &{ "$rowclass\::rs" };
             *{ "$rowclass\::rs" }  = *{ "$rowclass\::results" };
