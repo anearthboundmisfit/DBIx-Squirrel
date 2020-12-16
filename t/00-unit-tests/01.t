@@ -19,9 +19,7 @@ our (
     $cached_ekorn_dbh,
 );
 
-print STDERR "\n";
-
-$standard_dbi_dbh = DBI->connect( @T_DB_CONNECT_ARGS );
+$standard_dbi_dbh   = DBI->connect( @T_DB_CONNECT_ARGS );
 $standard_ekorn_dbh = DBIx::Squirrel->connect( @T_DB_CONNECT_ARGS );
 isa_ok $standard_ekorn_dbh, 'DBIx::Squirrel::db';
 $cached_ekorn_dbh = DBIx::Squirrel->connect_cached( @T_DB_CONNECT_ARGS );
@@ -36,7 +34,8 @@ test_clone_connection( $_ ) foreach (
 ok 1, __FILE__ . ' complete';
 done_testing;
 
-sub test_clone_connection {
+sub test_clone_connection
+{
     my ( $master, $description ) = @{ +shift };
 
     diag "";
@@ -56,7 +55,8 @@ sub test_clone_connection {
     return;
 }
 
-sub test_prepare_execute_fetch_single_row {
+sub test_prepare_execute_fetch_single_row
+{
     my ( $dbh ) = @_;
 
     diag "Result contains a single row";
@@ -85,12 +85,12 @@ sub test_prepare_execute_fetch_single_row {
     is $res, '0E0', 'execute';
     diag_result $sth;
 
-    $it = $sth->iterate;
-
     ( $exp, $got ) = (
         $arrayrefs[ 0 ],
         do {
-            ( $stderr, $row ) = capture_stderr { 
+            ( $stderr, $row ) = capture_stderr {
+                $sth = $dbh->prepare( $sql );
+                $it  = $sth->iterate;
                 $it->single;
             };
             $row;
