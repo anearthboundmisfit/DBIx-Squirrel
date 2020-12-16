@@ -19,14 +19,13 @@ our (
     $cached_ekorn_dbh,
 );
 
-print STDERR "\n";
-
 test_the_basics();
 
 ok 1, __FILE__ . ' complete';
 done_testing;
 
-sub test_the_basics {
+sub test_the_basics
+{
 
     diag "";
     diag "Test the basics";
@@ -1033,8 +1032,7 @@ sub test_the_basics {
     is_deeply $exp, $got, 'count'
       or dump_val { exp => $exp, got => $got };
 
-    ( $exp, $got ) = (
-        [
+    ( $exp, $got ) = ( [
             'MPEG audio file',
             'Protected AAC audio file',
             'Protected MPEG-4 video file',
@@ -1043,6 +1041,7 @@ sub test_the_basics {
         ],
         [
             do {
+                $sth->finish;
                 $sth = $standard_ekorn_dbh->prepare(
                     'SELECT MediaTypeId, Name FROM media_types',
                 );
@@ -1059,17 +1058,18 @@ sub test_the_basics {
     $it = $sth->it( sub { $_->{ Name } } )->reset( {} );
     diag "$_\n" for $it->all;
 
-    diag "$_\n" for $standard_ekorn_dbh->results(
+    diag "$_\n"
+      for $standard_ekorn_dbh->results(
         'SELECT MediaTypeId, Name FROM media_types',
         sub { $_->Name },
         sub { "Media type: $_" },
     )->all;
 
-    diag "$_\n" for $standard_ekorn_dbh->select('media_types')->results(
+    diag "$_\n"
+      for $standard_ekorn_dbh->select( 'media_types' )->results(
         sub { $_->Name },
         sub { "Media type: $_" },
     )->all;
-
 
     $standard_ekorn_dbh->disconnect;
     $standard_dbi_dbh->disconnect;

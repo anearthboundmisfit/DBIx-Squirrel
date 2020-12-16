@@ -19,8 +19,6 @@ our (
     $cached_ekorn_dbh,
 );
 
-print STDERR "\n";
-
 $standard_dbi_dbh   = DBI->connect( @T_DB_CONNECT_ARGS );
 $standard_ekorn_dbh = DBIx::Squirrel->connect( @T_DB_CONNECT_ARGS );
 isa_ok $standard_ekorn_dbh, 'DBIx::Squirrel::db';
@@ -36,7 +34,8 @@ test_clone_connection( $_ ) foreach (
 ok 1, __FILE__ . ' complete';
 done_testing;
 
-sub test_clone_connection {
+sub test_clone_connection
+{
     my ( $master, $description ) = @{ +shift };
 
     diag "";
@@ -56,7 +55,8 @@ sub test_clone_connection {
     return;
 }
 
-sub test_prepare_execute_fetch_multiple_rows {
+sub test_prepare_execute_fetch_multiple_rows
+{
     my ( $dbh ) = @_;
 
     diag "";
@@ -110,7 +110,7 @@ sub test_prepare_execute_fetch_multiple_rows {
     ( $exp, $got ) = (
         $arrayrefs[ 0 ],
         do {
-           ( $stderr, $row ) = capture_stderr {
+            ( $stderr, $row ) = capture_stderr {
                 $it->single;
             };
             $row;
@@ -208,7 +208,7 @@ sub test_prepare_execute_fetch_multiple_rows {
     ( $exp, $got ) = (
         [ @arrayrefs ],
         do {
-            $it  = $sth->it;
+            $it = $sth->it;
             my @ary = $it->first;
             while ( my $row = $it->next ) {
                 push @ary, $row;
@@ -237,7 +237,7 @@ sub test_prepare_execute_fetch_multiple_rows {
     ( $exp, $got ) = (
         [ @hashrefs ],
         do {
-            $it  = $sth->it;
+            $it = $sth->it;
             my @ary = $it->first( {} );
             while ( my $row = $it->next ) {
                 push @ary, $row;
@@ -266,7 +266,7 @@ sub test_prepare_execute_fetch_multiple_rows {
     ( $exp, $got ) = (
         [ @hashrefs ],
         do {
-            $it  = $sth->it;
+            $it = $sth->it;
             my @ary = $it->first( {} );
             while ( my $row = $it->next ) {
                 push @ary, $row;

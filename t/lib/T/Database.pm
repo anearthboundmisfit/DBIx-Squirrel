@@ -27,18 +27,21 @@ BEGIN {
     @T::Database::EXPORT_OK = @{ $T::Database::EXPORT_TAGS{ all } };
 }
 
-sub connect {
+sub connect
+{
     DBIx::Squirrel->connect( @T_DB_CONNECT_ARGS );
 }
 
-sub diag_result {
-    diag result(@_);
+sub diag_result
+{
+    diag result( @_ );
 }
 
-sub result {
+sub result
+{
     my ( $sth ) = @_;
     my ( $summary, @rows ) = do {
-        my @res = split /\n/, capture_stdout { $sth->dump_results };
+        my @res = split /\n/, capture { $sth->dump_results };
         ( pop @res, @res );
     };
     return join "\n", (
@@ -72,16 +75,19 @@ sub result {
     );
 }
 
-sub dump_result {
-    print STDERR result(@_);
+sub dump_result
+{
+    print STDERR result( @_ );
 }
 
-sub diag_val {
-    diag Dumper(@_);
+sub diag_val
+{
+    diag Dumper( @_ );
 }
 
-sub dump_val {
-    print STDERR Dumper(@_);
+sub dump_val
+{
+    print STDERR Dumper( @_ );
 }
 
 1;

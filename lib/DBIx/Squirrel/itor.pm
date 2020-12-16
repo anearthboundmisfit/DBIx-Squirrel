@@ -308,19 +308,22 @@ BEGIN { *buffer_is_still_empty = *buffer_is_empty }
 
 sub transform
 {
-    $_ = do {
-        my ( $p, $self ) = shift->_private;
-        if ( defined $_[ 0 ] ) {
-            local ( $_ );
-            my $row = $_[ 0 ];
-            for my $cb ( @{ $p->{ cb } } ) {
-                $row = $cb->( $_ = $row );
-            }
-            $row;
-        } else {
-            undef;
+    my ( $p, $self ) = shift->_private;
+    if ( @_ ) {
+        local ( $_ );
+        my @r = @_;
+        for my $cb ( @{ $p->{ cb } } ) {
+            @r = $cb->(
+                do {
+                    $_ = $r[ 0 ];
+                    @r;
+                }
+            );
         }
-    };
+        ( @r == 1 ) ? $r[ 0 ] : @r;
+    } else {
+        ();
+    }
 }
 
 sub single
